@@ -1,0 +1,31 @@
+// This is my first JSFX, it should change a signal to mono.
+
+desc: Mono
+
+slider1:0<0,2,1>Mode (Left, Right, Sum)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@slider
+
+mode = slider1;
+
+@sample
+
+mode == 0 ?
+(
+  spl1 = spl0;
+);
+mode == 1 ?
+(
+  spl0 = spl1;
+);
+mode == 2 ?
+(
+  sum = spl0 + spl1;
+  spl0 = 0.5*sum;
+  spl1 = 0.5*sum;
+);
