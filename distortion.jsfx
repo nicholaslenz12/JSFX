@@ -1,0 +1,51 @@
+// This is my second JSFX, it should distort a signal.
+
+desc: Distortion(Test)
+
+slider1:0<0,2,1{Sigmoid,Type2,Type3}>Distortion Type
+slider2:0<0,3,1>Hardness
+slider3:0<-30,12,1>Input Gain (dB)
+slider4:0<-30,12,1>Output Gain (dB)
+slider5:0<0,2,1{Left,Right,Stereo}>Channel Mode
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@slider
+
+mode   = slider1;
+hard   = 2^slider2;
+pre    = 2^(slider3/6);
+post   = 2^(slider4/6);
+cmode  = slider5;
+
+@sample
+
+//Sigmoid-style distortion
+mode == 0 ?
+(
+  cmode == 0 ? // mono-left
+  (
+    spl0 *= pre;
+    spl0 *= hard;
+    spl0  = post*(2/(1+10^(-spl0))-1)/hard; 
+    spl1  = spl0;
+  );
+  cmode == 1 ? // mono-right
+  (
+    spl1 *= pre;
+    spl1 *= hard;
+    spl1  = post*(2/(1+10^(-spl1))-1)/hard; 
+    spl0  = spl1;
+  )
+  : // stereo
+  (
+  spl0 *= pre;
+  spl1 *= pre;
+  spl0  = post*(2/(1+10^(-spl0))-1)/hard;
+  spl1  = post*(2/(1+10^(-spl1))-1)/hard; 
+  );
+  
+);
