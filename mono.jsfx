@@ -2,7 +2,8 @@
 
 desc: Mono
 
-slider1:0<0,2,1>Mode (Left, Right, Sum)
+slider1:0<0,2,1{Left,Right,Stereo}>Channel Mode
+slider2:0<-30,12,1>Output Gain
 
 in_pin:left input
 in_pin:right input
@@ -12,20 +13,23 @@ out_pin:right output
 @slider
 
 mode = slider1;
+gain = 2^(slider2/6)
 
 @sample
 
 mode == 0 ?
 (
+  spl0 = gain*spl0;
   spl1 = spl0;
 );
 mode == 1 ?
 (
+  spl1 = gain*spl1;
   spl0 = spl1;
 );
 mode == 2 ?
 (
   sum = spl0 + spl1;
-  spl0 = 0.5*sum;
-  spl1 = 0.5*sum;
+  spl0 = gain*0.5*sum;
+  spl1 = gain*0.5*sum;
 );
