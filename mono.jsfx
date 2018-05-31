@@ -12,7 +12,7 @@ out_pin:right output
 
 @slider
 
-mode = slider1;
+mode = slider1
 gain = 2^(slider2/6)
 
 @sample
@@ -29,7 +29,7 @@ mode == 1 ?
 );
 mode == 2 ?
 (
-  sum = spl0 + spl1;
+  sum  = spl0 + spl1;
   spl0 = gain*0.5*sum;
   spl1 = gain*0.5*sum;
 );
