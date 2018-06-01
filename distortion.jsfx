@@ -1,17 +1,20 @@
-// This is my second JSFX, it should distort a signal.
+// Distorts a signal based on 4 non-linear functions. 
 
-desc: Distortion(Test)
+desc: Distortion (NWL)
 
-slider1:0<0,2,1{Sigmoid,Type2,Type3}>Distortion Type
-slider2:0<0,3,1>Hardness
-slider3:0<-30,12,1>Input Gain (dB)
-slider4:0<-30,12,1>Output Gain (dB)
+slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
+slider2:0<0,6,1>Hardness
+slider3:0<-30,30,1>Input Gain (dB)
+slider4:0<-30,18,1>Output Gain (dB)
 slider5:0<0,2,1{Left,Right,Stereo}>Channel Mode
 
 in_pin:left input
 in_pin:right input
 out_pin:left output
 out_pin:right output
+
+@init
+halfpi = 1.5708;
 
 @slider
 
@@ -23,29 +26,174 @@ cmode  = slider5;
 
 @sample
 
-//Sigmoid-style distortion
+//tanh-style distortion
 mode == 0 ?
 (
   cmode == 0 ? // mono-left
   (
     spl0 *= pre;
     spl0 *= hard;
-    spl0  = post*(2/(1+10^(-spl0))-1)/hard; 
+    spl0  = post*(2/(1+7.389^(-spl0))-1)/hard; 
     spl1  = spl0;
   );
   cmode == 1 ? // mono-right
   (
     spl1 *= pre;
     spl1 *= hard;
-    spl1  = post*(2/(1+10^(-spl1))-1)/hard; 
+    spl1  = post*(2/(1+7.389^(-spl1))-1)/hard; 
     spl0  = spl1;
-  )
-  : // stereo
+  );
+  cmode == 2 ?
   (
   spl0 *= pre;
   spl1 *= pre;
-  spl0  = post*(2/(1+10^(-spl0))-1)/hard;
-  spl1  = post*(2/(1+10^(-spl1))-1)/hard; 
+  spl0 *= hard;
+  spl1 *= hard;
+  spl0  = post*(2/(1+7.389^(-spl0))-1)/hard;
+  spl1  = post*(2/(1+7.389^(-spl1))-1)/hard; 
   );
-  
+);
+
+//arctan distortion
+mode == 1 ?
+(
+  cmode == 0 ? // mono-left
+  (
+    spl0 *= pre;
+    spl0 *= hard;
+    spl0  = post*(atan(halfpi*spl0)/halfpi)/hard; 
+    spl1  = spl0;
+  );
+  cmode == 1 ? // mono-right
+  (
+    spl1 *= pre;
+    spl1 *= hard;
+    spl1  = post*(atan(halfpi*spl1)/halfpi)/hard; 
+    spl0  = spl1;
+  );
+  cmode == 2 ?
+  (
+  spl0 *= pre;
+  spl1 *= pre;
+  spl0 *= hard;
+  spl1 *= hard;
+  spl0  = post*(atan(halfpi*spl0)/halfpi)/hard;
+  spl1  = post*(atan(halfpi*spl1)/halfpi)/hard;
+  );
+);
+
+//cubic-clipper
+mode == 2 ?
+(
+  cmode == 0 ? // mono-left
+  (
+    spl0 *= pre;
+    spl0 *= hard;
+    abs(spl0)<= 1 ?
+    (
+      spl0 = post*(spl0 - spl0^3/3)/hard;
+      spl1 = spl0;
+    )
+    :
+    (
+    spl0 = post*(sign(spl0)*2/3)/hard;
+    spl1 = spl0;
+    )
+  );
+  cmode == 1 ? // mono-right
+  (
+    spl1 *= pre;
+    spl1 *= hard;
+    abs(spl1)<= 1 ?
+    (
+      spl1 = post*(spl1 - spl1^3/3)/hard;
+      spl0 = spl1;
+    )
+    :
+    (
+    spl1 = post*(sign(spl1)*2/3)/hard;
+    spl0 = spl1;
+    )
+  );
+  cmode == 2 ?
+  (
+    spl0 *= pre;
+    spl1 *= pre;
+    spl0 *= hard;
+    spl1 *= hard;
+    abs(spl0)<= 1 ?
+    (
+      spl0 = post*(spl0 - spl0^3/3)/hard;
+    )
+    :
+    (
+      spl0 = post*(sign(spl0)*2/3)/hard;
+    );
+    abs(spl1)<= 1 ?
+    (
+      spl1 = post*(spl1 - spl1^3/3)/hard;
+    )
+    :
+    (
+      spl1 = post*(sign(spl1)*2/3)/hard;
+    );
+  );
+);
+
+//sine-clipper
+mode == 3 ?
+(
+  cmode == 0 ? // mono-left
+  (
+    spl0 *= pre;
+    spl0 *= hard;
+    abs(spl0)<= 1 ?
+    (
+      spl0 = post*sin(halfpi*spl0)/halfpi/hard;
+      spl1 = spl0;
+    )
+    :
+    (
+    spl0 = post*sign(spl0)/halfpi/hard;
+    spl1 = spl0;
+    )
+  );
+  cmode == halfpi ? // mono-right
+  (
+    spl1 *= pre;
+    spl1 *= hard;
+    abs(spl1)<= 1 ?
+    (
+      spl1 = post*sin(halfpi*spl1)/halfpi/hard;
+      spl0 = spl1;
+    )
+    :
+    (
+    spl1 = post*sign(spl1)/halfpi/hard;
+    spl0 = spl1;
+    )
+  );
+  cmode == 2 ?
+  (
+    spl0 *= pre;
+    spl1 *= pre;
+    spl0 *= hard;
+    spl1 *= hard;
+    abs(spl0)<= 1 ?
+    (
+      spl0 = post*sin(halfpi*spl0)/halfpi/hard;
+    )
+    :
+    (
+    spl0 = post*sign(spl0)/halfpi/hard;
+    );
+    abs(spl1)<= 1 ?
+    (
+      spl1 = post*sin(halfpi*spl1)/halfpi/hard;
+    )
+    :
+    (
+      spl1 = post*sign(spl1)/halfpi/hard;
+    );
+  );
 );
