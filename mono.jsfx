@@ -29,7 +29,7 @@ mode == 1 ?
 );
 mode == 2 ?
 (
-  sum  = spl0 + spl1;
-  spl0 = gain*0.5*sum;
-  spl1 = gain*0.5*sum;
+  average = 0.5*(spl0 + spl1);
+  spl0    = gain*average;
+  spl1    = gain*average;
 );
