@@ -1,21 +1,14 @@
 /*
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
- Converts two channels to one channel.
-
- The various modes are:
- Left-mono
- Right-mono
- Stereo (averages the spl of both channels)
+ Basic 1-pole low-pass filter. Needs work.
  */
-desc: Mono
+desc:N-Filter
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
-slider1:0<0,2,1{Left,Right,Stereo}>Channel Mode
-slider2:0<-30,12,1>Output Gain
-
+slider1:1<1,2,.0001>Cutoff
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -25,34 +18,35 @@ in_pin:right input
 out_pin:left output
 out_pin:right output
 
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+@init
+xL1=xR1=yL1=yR1;
 
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-
-mode = slider1;
-gain = 2^(slider2/6);
-
+cutoff = log(slider1);
+a = cutoff;
+b = 1-a;
 
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
+inputL = spl0;
+inputR = spl1;
 
-mode == 0 ?
-(
-  spl0 = gain*spl0;
-  spl1 = spl0;
-);
-mode == 1 ?
-(
-  spl1 = gain*spl1;
-  spl0 = spl1;
-);
-mode == 2 ?
-(
-  average = 0.5*(spl0 + spl1);
-  spl0    = gain*average;
-  spl1    = gain*average;
-);
+outputL = a*inputL + b*yL1;
+outputR = a*inputR + b*yR1;
+
+xL1 = inputL;
+xR1 = inputR;
+
+yL1 = outputL;
+yR1 = outputR;
+
+spl0 = outputL;
+spl1 = outputR;

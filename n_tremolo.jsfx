@@ -1,0 +1,74 @@
+/*
+ Nicholas Lenz
+ Github : nicholaslenz12@gmail.com
+ Tremolo effect. Contains an evelope that modifies the shape of the effect.
+ Needs tempo sync and decay <- to prevent audio pops.
+ */
+desc:N-tremolo
+
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
+slider1:1<.05,1,.01>Period (s)
+slider2:0.01<0.01,1,.01>Attack
+slider3:0.01<0.01,1,.01>Decay
+slider4:1<0,1,.01>Sustain
+slider5:0<0,1,1{Sine, Rectified Sine}>LFO Shape
+
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+@init
+cycle_position = 0;
+pi = 3.141592;
+
+// ----------------------------------------------------------------------------
+// SLIDER
+// ----------------------------------------------------------------------------
+@slider
+period  = srate*slider1;
+attack  = period*slider2|0;
+decay   = slider3;
+sustain = slider4;
+shape   = slider5;
+
+// Generate Look-Up for LFO
+x = 0;
+loop(period,
+  shape == 0 ?
+  (
+    period[x] = (sin(2*pi*x/period)+1)/2;
+  ) :
+  (
+    period[x] = abs(sin(2*pi*x/period));
+  );
+  x += 1;
+);
+
+// Generate Look-Up for Envelope
+x = 0;
+loop(attack,
+  period[period+x] = min(x/attack,1);
+  x += 1;
+);
+loop(period - attack,
+  period[period+x] = 1;
+  x += 1;
+);
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
+@sample
+spl0 = spl0*period[cycle_position]*period[period+cycle_position];
+spl1 = spl1*period[cycle_position]*period[period+cycle_position];
+
+(cycle_position += 1) > period ? cycle_position = 0;

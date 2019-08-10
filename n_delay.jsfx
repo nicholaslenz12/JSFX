@@ -1,0 +1,111 @@
+/*
+ Nicholas Lenz
+ Github : nicholaslenz12@gmail.com
+ Single tap delay. Can also modulate the delay between the left and right channel
+ (Ping-Pong). Can be synced to project tempo.
+ */
+desc: N-Delay
+
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
+slider1:200<1,2000,1>Length (ms)
+slider2:40<0,100,1>Feedback
+slider3:30<0,100,1>Mix
+slider4:100<-100,100,1>Width
+slider6:1<0,1,1{Off,On}>Tempo Sync
+slider7:.5<.125,1,.125>Fraction of Quarter Note
+slider8:1<0,1,1{Stereo,Ping-Pong}>Delay Mode
+
+
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+@init
+delay_position = 0;
+fade = 10000; // Lower == longer
+
+
+// ----------------------------------------------------------------------------
+// SLIDER
+// ----------------------------------------------------------------------------
+@slider
+tempo_sync = slider6;
+tempo_sync ? ( delay_length = slider7*srate*60; )
+        : ( delay_length = slider1*srate/1000; );
+
+feedback = slider2/100;
+
+mix = slider3/100;
+dry_mix = 1 - mix;
+
+width = (slider4+100)/200;
+rev_width = 1 - width;
+
+delay_mode = slider8;
+delay_mode == 1 ? pp = 0;
+
+
+// ----------------------------------------------------------------------------
+// BLOCK
+// ----------------------------------------------------------------------------
+@block
+tempo_sync && delay_length == slider7*srate*60 ? delay_length /= tempo;
+
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
+@sample
+
+// Allocate memory
+delay_buffer = 2*delay_position;
+effect_left = delay_buffer[0];
+effect_right = delay_buffer[1];
+
+delay_mode > 0 ? // If set to Ping-Pong
+(
+  pp == 1 ? // Current echo is in right channel
+  (
+    // Set value in feedback loop, per channel
+    delay_buffer[0] = spl0 + effect_left*feedback;
+    delay_buffer[1] = spl1 + effect_right*feedback;
+
+    // Set current sample value, per channel
+    spl0 = (spl0*dry_mix + width*effect_left*mix);
+    spl1 = (spl1*dry_mix + rev_widht*effect_right*mix);
+  ) :  // Current echo is in left channel
+  (
+    // Set value in feedback loop, per channel
+    delay_buffer[0] = spl0 + effect_left*feedback;
+    delay_buffer[1] = spl1 + effect_right*feedback;
+
+    // Set current sample value, per channel
+    spl0 = (spl0*dry_mix + rev_widht*effect_left*mix);
+    spl1 = (spl1*dry_mix + width*effect_right*mix);
+  );
+): // If set to Stereo
+(
+  // Set value in feedback loop, per channel
+  delay_buffer[0] = spl0 + effect_left*feedback;
+  delay_buffer[1] = spl1 + effect_right*feedback;
+
+  // Set current sample value, per channel
+  spl0 = (spl0*dry_mix + effect_left*mix);
+  spl1 = (spl1*dry_mix + effect_right*mix);
+);
+
+(delay_position+=1) > delay_length ? // If last sample for current echo reached
+(
+  delay_position = 0; // Reset sample position of delay
+  pp = 1 - pp; // Switch primary channel for Ping-Pong
+);

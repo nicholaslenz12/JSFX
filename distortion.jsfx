@@ -1,29 +1,68 @@
-// Distorts a signal based on 4 non-linear functions. 
+/*
+ Nicholas Lenz
+ Github : nicholaslenz12@gmail.com
+ Distorts a signal based on 4 non-linear functions.
+ audio from 2-channels can first be converted to 1-channel before processing,
+ or the processing can be applied to both channels.
 
-desc: Distortion (NWL)
+ The types of distortion are:
+ Tanh
+ Arctan
+ Cubic (x^3) (potential for higher-order, odd poly's later)
+ Sine
+ */
+desc: N-Distortion
 
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
 slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
-slider2:0<0,6,1>Hardness
-slider3:0<-30,30,1>Input Gain (dB)
-slider4:0<-30,18,1>Output Gain (dB)
-slider5:0<0,2,1{Left,Right,Stereo}>Channel Mode
+slider3:12<-30,30,1>Input Gain (dB)
+slider4:-12<-30,18,1>Output Gain (dB)
+slider5:2<0,2,1{Left,Right,Stereo}>Channel Mode
+slider6:1<0,1,1{No, Yes}>Mirror Gain
 
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
 in_pin:left input
 in_pin:right input
 out_pin:left output
 out_pin:right output
 
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
 @init
-halfpi = 1.5708;
 
+// Constants
+halfpi = 2*atan(1);
+
+old_slider3 = slider3;
+
+// ----------------------------------------------------------------------------
+// SLIDER
+// ----------------------------------------------------------------------------
 @slider
 
 mode   = slider1;
-hard   = 2^slider2;
-pre    = 2^(slider3/6);
-post   = 2^(slider4/6);
+mirror = slider6;
 cmode  = slider5;
 
+pre    = 2^(slider3/6);
+
+// Mirror behavior of Input Gain for Output Gain slider
+diff = slider3 - old_slider3;
+mirror ? slider4 = slider4 - diff;
+old_slider3 = slider3;
+
+post   = 2^(slider4/6);
+
+
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
 @sample
 
 //tanh-style distortion
@@ -32,25 +71,21 @@ mode == 0 ?
   cmode == 0 ? // mono-left
   (
     spl0 *= pre;
-    spl0 *= hard;
-    spl0  = post*(2/(1+7.389^(-spl0))-1)/hard; 
+    spl0  = post*(2/(1+7.389^(-spl0))-1);
     spl1  = spl0;
   );
   cmode == 1 ? // mono-right
   (
     spl1 *= pre;
-    spl1 *= hard;
-    spl1  = post*(2/(1+7.389^(-spl1))-1)/hard; 
+    spl1  = post*(2/(1+7.389^(-spl1))-1);
     spl0  = spl1;
   );
-  cmode == 2 ?
+  cmode == 2 ? // stereo
   (
   spl0 *= pre;
   spl1 *= pre;
-  spl0 *= hard;
-  spl1 *= hard;
-  spl0  = post*(2/(1+7.389^(-spl0))-1)/hard;
-  spl1  = post*(2/(1+7.389^(-spl1))-1)/hard; 
+  spl0  = post*(2/(1+7.389^(-spl0))-1);
+  spl1  = post*(2/(1+7.389^(-spl1))-1);
   );
 );
 
@@ -60,25 +95,21 @@ mode == 1 ?
   cmode == 0 ? // mono-left
   (
     spl0 *= pre;
-    spl0 *= hard;
-    spl0  = post*(atan(halfpi*spl0)/halfpi)/hard; 
+    spl0  = post*(atan(halfpi*spl0)/halfpi);
     spl1  = spl0;
   );
   cmode == 1 ? // mono-right
   (
     spl1 *= pre;
-    spl1 *= hard;
-    spl1  = post*(atan(halfpi*spl1)/halfpi)/hard; 
+    spl1  = post*(atan(halfpi*spl1)/halfpi);
     spl0  = spl1;
   );
-  cmode == 2 ?
+  cmode == 2 ? // stereo
   (
   spl0 *= pre;
   spl1 *= pre;
-  spl0 *= hard;
-  spl1 *= hard;
-  spl0  = post*(atan(halfpi*spl0)/halfpi)/hard;
-  spl1  = post*(atan(halfpi*spl1)/halfpi)/hard;
+  spl0  = post*(atan(halfpi*spl0)/halfpi);
+  spl1  = post*(atan(halfpi*spl1)/halfpi);
   );
 );
 
@@ -88,54 +119,50 @@ mode == 2 ?
   cmode == 0 ? // mono-left
   (
     spl0 *= pre;
-    spl0 *= hard;
     abs(spl0)<= 1 ?
     (
-      spl0 = post*(spl0 - spl0^3/3)/hard;
+      spl0 = post*(spl0 - spl0^3/3);
       spl1 = spl0;
     )
     :
     (
-    spl0 = post*(sign(spl0)*2/3)/hard;
+    spl0 = post*(sign(spl0)*2/3);
     spl1 = spl0;
     )
   );
   cmode == 1 ? // mono-right
   (
     spl1 *= pre;
-    spl1 *= hard;
     abs(spl1)<= 1 ?
     (
-      spl1 = post*(spl1 - spl1^3/3)/hard;
+      spl1 = post*(spl1 - spl1^3/3);
       spl0 = spl1;
     )
     :
     (
-    spl1 = post*(sign(spl1)*2/3)/hard;
+    spl1 = post*(sign(spl1)*2/3);
     spl0 = spl1;
     )
   );
-  cmode == 2 ?
+  cmode == 2 ? // stereo
   (
     spl0 *= pre;
     spl1 *= pre;
-    spl0 *= hard;
-    spl1 *= hard;
     abs(spl0)<= 1 ?
     (
-      spl0 = post*(spl0 - spl0^3/3)/hard;
+      spl0 = post*(spl0 - spl0^3/3);
     )
     :
     (
-      spl0 = post*(sign(spl0)*2/3)/hard;
+      spl0 = post*(sign(spl0)*2/3);
     );
     abs(spl1)<= 1 ?
     (
-      spl1 = post*(spl1 - spl1^3/3)/hard;
+      spl1 = post*(spl1 - spl1^3/3);
     )
     :
     (
-      spl1 = post*(sign(spl1)*2/3)/hard;
+      spl1 = post*(sign(spl1)*2/3);
     );
   );
 );
@@ -146,54 +173,50 @@ mode == 3 ?
   cmode == 0 ? // mono-left
   (
     spl0 *= pre;
-    spl0 *= hard;
     abs(spl0)<= 1 ?
     (
-      spl0 = post*sin(halfpi*spl0)/halfpi/hard;
+      spl0 = post*sin(halfpi*spl0)/halfpi;
       spl1 = spl0;
     )
     :
     (
-    spl0 = post*sign(spl0)/halfpi/hard;
+    spl0 = post*sign(spl0)/halfpi;
     spl1 = spl0;
     )
   );
   cmode == halfpi ? // mono-right
   (
     spl1 *= pre;
-    spl1 *= hard;
     abs(spl1)<= 1 ?
     (
-      spl1 = post*sin(halfpi*spl1)/halfpi/hard;
+      spl1 = post*sin(halfpi*spl1)/halfpi;
       spl0 = spl1;
     )
     :
     (
-    spl1 = post*sign(spl1)/halfpi/hard;
+    spl1 = post*sign(spl1)/halfpi;
     spl0 = spl1;
     )
   );
-  cmode == 2 ?
+  cmode == 2 ? // stereo
   (
     spl0 *= pre;
     spl1 *= pre;
-    spl0 *= hard;
-    spl1 *= hard;
     abs(spl0)<= 1 ?
     (
-      spl0 = post*sin(halfpi*spl0)/halfpi/hard;
+      spl0 = post*sin(halfpi*spl0)/halfpi;
     )
     :
     (
-    spl0 = post*sign(spl0)/halfpi/hard;
+    spl0 = post*sign(spl0)/halfpi;
     );
     abs(spl1)<= 1 ?
     (
-      spl1 = post*sin(halfpi*spl1)/halfpi/hard;
+      spl1 = post*sin(halfpi*spl1)/halfpi;
     )
     :
     (
-      spl1 = post*sign(spl1)/halfpi/hard;
+      spl1 = post*sign(spl1)/halfpi;
     );
   );
 );
