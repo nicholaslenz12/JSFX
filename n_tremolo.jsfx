@@ -2,18 +2,23 @@
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
  Tremolo effect. Contains an evelope that modifies the shape of the effect.
- Needs tempo sync and decay <- to prevent audio pops.
+ Needs tempo sync and pop removal.
  */
-desc:N-tremolo
+desc:N-Tremolo
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
 slider1:1<.05,1,.01>Period (s)
-slider2:0.01<0.01,1,.01>Attack
-slider3:0.01<0.01,1,.01>Decay
+slider2:0.05<0.05,0.90,0.01>Attack
+slider3:0.05<0.05,0.90,0.01>Decay
 slider4:1<0,1,.01>Sustain
-slider5:0<0,1,1{Sine, Rectified Sine}>LFO Shape
+slider5:0.05<0.05,1,0.01>Fade
+slider6:0<0,2,{Sine, Rectified Sine, Up Saw, Down Saw}>LFO Shape
+slider7:0.5<0,1,.01>Strength
+slider8:1<0,1,{No,Yes}>Tempo Sync
+slider9:0<0,4,{1,1/2,1/4,1/8,1/16}>Rate
+
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -28,47 +33,112 @@ out_pin:right output
 // ----------------------------------------------------------------------------
 @init
 cycle_position = 0;
-pi = 3.141592;
+envelope_set = 0;
+
+// ----------------------------------------------------------------------------
+// FUNCTIONS
+// ----------------------------------------------------------------------------
+function Generate_lfo()
+(
+  x = 0;
+  loop(period,
+    shape == 0 ?
+    (
+      period[x] = (sin(2*$pi*x/period)+1)/2;
+    ) :
+    shape == 1 ?
+    (
+      period[x] = abs(sin(2*$pi*x/period));
+    ) :
+    shape == 2 ?
+    (
+      period[x] = x/period;
+    ) :
+    (
+      period[x] = -x/period + 1;
+    );
+    x += 1;
+  );
+
+  // Windowing to remove pops (need less extreme version to preserve shape of tremolo)
+  x = 0;
+  loop(period,
+    period[x] = period[x]*abs(sin($pi*x/period));
+    x += 1;
+  );
+);
+
+function Generate_envelope()
+(
+  x = 0;
+  loop(attack,
+    period[period+x] = min(x/attack,1);
+    x += 1;
+  );
+  y = 0;
+  loop(decay,
+    period[period+x] = 1 - loss*min(y/decay,1);
+    x += 1;
+    y += 1;
+  );
+  y = 0;
+  loop(period-attack-decay-fade,
+    period[period+x] = sustain;
+    x += 1;
+    y += 1;
+  );
+  y = 0;
+  loop(fade,
+    period[period+x] = sustain*(1 - min(y/fade,1));
+    x += 1;
+    y += 1;
+  );
+);
 
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-period  = srate*slider1;
+cycle_length = slider1;
+shape = slider6;
+strength = slider7;
+rstrength = 1 - strength;
+tempo_sync = slider8;
+rate = slider9;
+Generate_lfo();
+Generate_envelope();
+
+
+@block
+tempo_sync ?
+(
+  rate == 0 ? period = srate*60/tempo|0;
+  rate == 1 ? period = srate*60/tempo/2|0;
+  rate == 2 ? period = srate*60/tempo/4|0;
+  rate == 3 ? period = srate*60/tempo/8|0;
+  rate == 4 ? period = srate*60/tempo/16|0;
+):
+(
+  period = srate*cycle_length;
+);
 attack  = period*slider2|0;
-decay   = slider3;
+decay   = (period-attack)*slider3|0;
 sustain = slider4;
-shape   = slider5;
+loss    = 1 - sustain;
+fade    = (period-attack-decay)*slider5|0;
 
-// Generate Look-Up for LFO
-x = 0;
-loop(period,
-  shape == 0 ?
-  (
-    period[x] = (sin(2*pi*x/period)+1)/2;
-  ) :
-  (
-    period[x] = abs(sin(2*pi*x/period));
-  );
-  x += 1;
-);
-
-// Generate Look-Up for Envelope
-x = 0;
-loop(attack,
-  period[period+x] = min(x/attack,1);
-  x += 1;
-);
-loop(period - attack,
-  period[period+x] = 1;
-  x += 1;
+!envelope_set ?
+(
+  Generate_lfo();
+  Generate_envelope();
+  envelope_set = 1;
 );
 
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
-spl0 = spl0*period[cycle_position]*period[period+cycle_position];
-spl1 = spl1*period[cycle_position]*period[period+cycle_position];
+spl0 = rstrength*spl0 + strength*spl0*period[cycle_position]*period[period+cycle_position];
+spl1 = rstrength*spl1 + strength*spl1*period[cycle_position]*period[period+cycle_position];
 
 (cycle_position += 1) > period ? cycle_position = 0;
