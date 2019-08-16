@@ -33,15 +33,15 @@ mode = slider1;
 
 
 // ----------------------------------------------------------------------------
-// SAMPLE 
+// SAMPLE
 // ----------------------------------------------------------------------------
 @sample
 
-mode == 1 ?
+mode == 1 ? // Set to Right mode
 (
   spl0 = spl1;
-) :
+) : // Set to Left or Stereo mode
 (
-  mode == 2 ? spl0 = 0.5*(spl0 + spl1);
+  mode == 2 ? spl0 = 0.5*(spl0 + spl1); // Average channels if set to Stereo
   spl1 = spl0;
 );
