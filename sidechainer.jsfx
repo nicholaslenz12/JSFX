@@ -8,7 +8,7 @@ desc:Sidechainer
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
-slider1:2<0,5,{1,1/2,1/4,1/8,1/16,1/32}>Sync
+slider1:2<0,5,1>Sync
 slider2:0.6<0,1,0.01>Mix
 slider3:100<10,1000,1>Fade (Samples)
 slider4:0<0,1,0.01>Shape
@@ -29,13 +29,13 @@ out_pin:right output
 @init
 cycle_position = 0;
 envelope_set = 0;
-sync = -1;
+sync = 2;
 fade_length = -1;
 length = -1;
 shape = -1;
 mix = -1;
-update_gui = 0;
 init = 1;
+prop = 0;
 
 note_on = $x90;
 
@@ -58,7 +58,7 @@ function Generate_fade()
 (
     x = 0;
     loop(fade_length,
-        period[period - fade_length + x] *= 1 - min(x/fade_length,1);
+        period[period-fade_length+x] *= 1 - min(x/fade_length,1);
         x += 1;
     );
 );
@@ -75,6 +75,7 @@ old_mix = mix;
 
 sync = slider1;
 mix = slider2;
+rev_mix = 1-mix;
 fade_length = slider3;
 shape = slider4;
 source = slider5;
@@ -87,9 +88,7 @@ sync != old_sync
 (
   Generate_envelope();
   Generate_fade();
-  update_gui = 1;
 );
-//sync != old_sync ? cycle_position = 0;
 
 // ----------------------------------------------------------------------------
 // BLOCK
@@ -118,10 +117,10 @@ source ?
     );
 );
 
+prop = (beat_position - floor(beat_position*power)/power)*power;
 init ?
 (
-    y = (beat_position - floor(beat_position*power)/power)*power;
-    cycle_position = period*y;
+    cycle_position = period*prop;
     init = 0;
 );
 
@@ -130,38 +129,88 @@ init ?
 // ----------------------------------------------------------------------------
 @sample
 
-(cycle_position += 1) > period ? cycle_position = 0;
-
 left = spl0;
 right = spl1;
-rev_mix = 1-mix;
 
 spl0 *= period[cycle_position];
 spl0 = mix*spl0 + rev_mix*left;
 spl1 *= period[cycle_position];
 spl1 = mix*spl1 + rev_mix*right;
 
+(cycle_position += 1) > period ? cycle_position = 0;
+
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
-@gfx 100 200;
+@gfx 100 200
+gfx_setfont(1,"Menlo",gfx_h/8,'b');
 
-update_gui ?
-(
-    gfx_x = 0;
-    gfx_y = gfx_h;
-    gfx_x_old = gfx_x;
-    gfx_y_old = gfx_y;
-    gfx_r = gfx_g = gfx_b = 1;
+gfx_r = gfx_g = gfx_b = 0.25;
+gfx_line(0,gfx_h/6,gfx_w,gfx_h/6);
+gfx_line(0,2*gfx_h/6,gfx_w,2*gfx_h/6);
+gfx_line(0,3*gfx_h/6,gfx_w,3*gfx_h/6);
+gfx_line(0,4*gfx_h/6,gfx_w,4*gfx_h/6);
+gfx_line(0,5*gfx_h/6,gfx_w,5*gfx_h/6);
 
-    loop(gfx_w,
-        gfx_y = mix*(gfx_h - gfx_h*period[gfx_x*period/gfx_w])|0;
-        gfx_x += 1;
-        gfx_line(gfx_x_old,gfx_y_old,gfx_x,gfx_y);
-        gfx_x_old = gfx_x;
-        gfx_y_old = gfx_y;
-    );
-    update_gui = 0;
+gfx_g = gfx_b = 0;
+
+gfx_x = 0;
+gfx_y = 0.015*gfx_h;
+sync == 0 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/1");
+
+gfx_x = 0;
+gfx_y = gfx_h/6 + 0.015*gfx_h;
+sync == 1 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/2");
+
+gfx_x = 0;
+gfx_y = 2*gfx_h/6 + 0.015*gfx_h;
+sync == 2 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/4");
+
+gfx_x = 0;
+gfx_y = 3*gfx_h/6 + 0.015*gfx_h;
+sync == 3 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/8");
+
+gfx_x = 0;
+gfx_y = 4*gfx_h/6 + 0.015*gfx_h;
+sync == 4 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/16");
+
+gfx_x = 0;
+gfx_y = 5*gfx_h/6 + 0.015*gfx_h;
+sync == 5 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/32");
+
+gfx_x = 0;
+gfx_y = gfx_h;
+
+gfx_r = gfx_g = gfx_b = 1;
+
+loop(gfx_w,
+    gfx_lineto(gfx_x + 1, mix*(gfx_h - gfx_h*period[gfx_x*period/gfx_w])|0);
 );
 
+gfx_r = 1;
+gfx_g = gfx_b = 0;
 
+env_h = mix*(gfx_h - gfx_h*period[prop*period])|0;
+env_w = gfx_w*prop;
+
+gfx_circle(env_w,env_h,3, 1);
+gfx_line(env_w,gfx_h,env_w,env_h);
+
+
+mouse_cap ?
+(
+    mouse_y < gfx_h/6 ? sync = slider1 = 0:
+    mouse_y < 2*gfx_h/6 ? sync = slider1 = 1 :
+    mouse_y < 3*gfx_h/6 ? sync = slider1 = 2 :
+    mouse_y < 4*gfx_h/6 ? sync = slider1 = 3 :
+    mouse_y < 5*gfx_h/6 ? sync = slider1 = 4 :
+    sync = slider1 = 5;
+    Generate_envelope();
+    Generate_fade();
+)
