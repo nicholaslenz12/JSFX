@@ -1,0 +1,167 @@
+/*
+ Nicholas Lenz
+ Github : nicholaslenz12@gmail.com
+ Tempo synced envelope-altering plugin. Future update to sync to external input.
+ */
+desc:Sidechainer
+
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
+slider1:2<0,5,{1,1/2,1/4,1/8,1/16,1/32}>Sync
+slider2:0.6<0,1,0.01>Mix
+slider3:100<10,1000,1>Fade (Samples)
+slider4:0<0,1,0.01>Shape
+slider5:0<0,1,{Audio,MIDI}>Source
+slider6:0.6<0,1,0.01>Length
+
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+@init
+cycle_position = 0;
+envelope_set = 0;
+sync = -1;
+fade_length = -1;
+length = -1;
+shape = -1;
+mix = -1;
+update_gui = 0;
+init = 1;
+
+note_on = $x90;
+
+function Generate_envelope()
+(
+    phase1 = length*period|0;
+    phase2 = period - phase1;
+    x = 0;
+    loop(phase1,
+        period[x] = (1-shape)*min((x/phase1)^2,1) + shape*min(sqrt(x/phase1),1);
+        x += 1;
+    );
+    loop(phase2,
+        period[x] = 1;
+        x += 1
+    );
+);
+
+function Generate_fade()
+(
+    x = 0;
+    loop(fade_length,
+        period[period - fade_length + x] *= 1 - min(x/fade_length,1);
+        x += 1;
+    );
+);
+
+// ----------------------------------------------------------------------------
+// SLIDER
+// ----------------------------------------------------------------------------
+@slider
+old_sync = sync;
+old_fade_length = fade_length;
+old_length = length;
+old_shape = shape;
+old_mix = mix;
+
+sync = slider1;
+mix = slider2;
+fade_length = slider3;
+shape = slider4;
+source = slider5;
+length = slider6;
+sync != old_sync
+|| fade_length != old_fade_length
+|| length != old_length
+|| shape != old_shape
+|| mix != old_mix ?
+(
+  Generate_envelope();
+  Generate_fade();
+  update_gui = 1;
+);
+//sync != old_sync ? cycle_position = 0;
+
+// ----------------------------------------------------------------------------
+// BLOCK
+// ----------------------------------------------------------------------------
+@block
+
+power = 2^sync/4;
+
+period = srate*240/tempo/power/4|0;
+
+!envelope_set ?
+(
+    Generate_envelope();
+    Generate_fade();
+    envelope_set = 1;
+);
+
+source ?
+(
+    while (midirecv(0,msg1,msg2,msg3))
+    (
+        msg1==note_on && msg3!=0 ?
+        (
+            cycle_position = 0;
+        );
+    );
+);
+
+init ?
+(
+    y = (beat_position - floor(beat_position*power)/power)*power;
+    cycle_position = period*y;
+    init = 0;
+);
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
+@sample
+
+(cycle_position += 1) > period ? cycle_position = 0;
+
+left = spl0;
+right = spl1;
+rev_mix = 1-mix;
+
+spl0 *= period[cycle_position];
+spl0 = mix*spl0 + rev_mix*left;
+spl1 *= period[cycle_position];
+spl1 = mix*spl1 + rev_mix*right;
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
+@gfx 100 200;
+
+update_gui ?
+(
+    gfx_x = 0;
+    gfx_y = gfx_h;
+    gfx_x_old = gfx_x;
+    gfx_y_old = gfx_y;
+    gfx_r = gfx_g = gfx_b = 1;
+
+    loop(gfx_w,
+        gfx_y = mix*(gfx_h - gfx_h*period[gfx_x*period/gfx_w])|0;
+        gfx_x += 1;
+        gfx_line(gfx_x_old,gfx_y_old,gfx_x,gfx_y);
+        gfx_x_old = gfx_x;
+        gfx_y_old = gfx_y;
+    );
+    update_gui = 0;
+);
+
+

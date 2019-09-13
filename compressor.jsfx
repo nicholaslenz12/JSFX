@@ -1,0 +1,87 @@
+/*
+ Nicholas Lenz
+ Github : nicholaslenz12@gmail.com
+ */
+desc:compressor
+
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
+slider1:1<1,1000,.01>RMS Length (ms)
+slider2:0<-36,0,.01>Threshold (dB)
+slider3:1<1,10,.01>Slope
+slider4:1<1,500,.01>Attack (ms)
+slider5:10<1,5000,.01>Release (ms)
+slider6:0<0,12,.01>Makeup (dB)
+
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+@init
+position = 0;
+sumL = 0;
+sumR = 0;
+compress = 0;
+max_gain_multiplier = 1;
+
+
+// ----------------------------------------------------------------------------
+// SLIDER
+// ----------------------------------------------------------------------------
+@slider
+window_length = slider1*srate/1000|0;
+threshold = 2^(slider2/6);
+slope = slider3;
+attack = slider4*srate/1000|0;
+release = slider5*srate/1000|0;
+decay = 0;
+makeup = 2^(slider6/6);
+
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
+@sample
+// Compute RMS at sample.
+sumL -= position[0]*position[0]/window_length;
+sumL += spl0*spl0/window_length;
+position[0] = spl0;
+
+sumR -= position[window_length]*position[window_length]/window_length;
+sumR += spl1*spl1/window_length;
+position[window_length] = spl1;
+
+rmsL = sqrt(sumL);
+rmsR = sqrt(sumR);
+
+power = (rmsL + rmsR)/2;
+dB = log(power)/log(2);
+
+power > threshold ? compress += 1 : compress = 0;
+
+(compress > attack) ?
+(
+  max_gain_multiplier = (1/slope) + (1-1/slope)*threshold/power;
+  decay = release;
+);
+
+gain_multiplier = (decay/release)*max_gain_multiplier + (1 - decay/release);
+decay > 0 ? decay -= 1 : decay = 0;
+
+
+spl0 = makeup*gain_multiplier*(spl0);
+spl1 = makeup*gain_multiplier*(spl1);
+
+
+
+
+// Move cycle position
+(position += 1) == window_length ? position = 0;

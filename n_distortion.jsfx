@@ -54,7 +54,7 @@ function cubic(x)
 
 function sine(x)
 (
-  x <= 1 ? sin(halfpi*x)/halfpi : sign(x);
+  abs(x) <= 1 ? sin(halfpi*x)/halfpi : sign(x);
 );
 
 
