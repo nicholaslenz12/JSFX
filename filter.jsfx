@@ -1,9 +1,15 @@
 /*
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
- Basic 1-pole low-pass filter. Needs work.
+
+ Basic 1-pole low-pass filter.
+
+ Needs work:
+ - Scale on the slider is near-unusable.
+ - GUI would be nice.
+ - Comments!
  */
-desc:N-Filter
+desc:Filter
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS

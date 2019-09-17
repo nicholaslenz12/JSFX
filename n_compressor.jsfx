@@ -1,8 +1,15 @@
 /*
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
+
+ Basic dynamic compressor.
+
+ Currently needs some help:
+ - Improper computation gain reduction based on the slope.
+ - The dynamics are odd.
  */
-desc:compressor
+
+desc:N-Compressor
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
@@ -26,7 +33,7 @@ out_pin:right output
 // INIT
 // ----------------------------------------------------------------------------
 @init
-position = 0;
+cycle_pos = 0;
 sumL = 0;
 sumR = 0;
 compress = 0;
@@ -50,38 +57,45 @@ makeup = 2^(slider6/6);
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
-// Compute RMS at sample.
-sumL -= position[0]*position[0]/window_length;
+// Add value/remove value in RMS buffer
+sumL -= cycle_pos[0]*cycle_pos[0]/window_length;
 sumL += spl0*spl0/window_length;
-position[0] = spl0;
-
-sumR -= position[window_length]*position[window_length]/window_length;
+cycle_pos[0] = spl0;
+sumR -= cycle_pos[window_length]*cycle_pos[window_length]/window_length;
 sumR += spl1*spl1/window_length;
-position[window_length] = spl1;
+cycle_pos[window_length] = spl1;
 
+// compute RMS per channel
 rmsL = sqrt(sumL);
 rmsR = sqrt(sumR);
 
+// (possible incorrect) determine power of signal
 power = (rmsL + rmsR)/2;
+
+// compute log_2(power)
 dB = log(power)/log(2);
 
+// if threshold exceeded
 power > threshold ? compress += 1 : compress = 0;
 
-(compress > attack) ?
+(compress > attack) ? // if exceeds threshold for attack length
 (
-  max_gain_multiplier = (1/slope) + (1-1/slope)*threshold/power;
-  decay = release;
+    // (incorrect) compute max gain multiplier
+    max_gain_multiplier = (1/slope) + (1-1/slope)*threshold/power;
+
+    // reset length of compression time
+    decay = release;
 );
 
+// (incorrect) compute new gain multiplier
 gain_multiplier = (decay/release)*max_gain_multiplier + (1 - decay/release);
-decay > 0 ? decay -= 1 : decay = 0;
 
+// decrement decay
+decay > 0 ? decay -= 1 : decay = 0;
+// decay = max(decay-1,0);
 
 spl0 = makeup*gain_multiplier*(spl0);
 spl1 = makeup*gain_multiplier*(spl1);
 
 
-
-
-// Move cycle position
-(position += 1) == window_length ? position = 0;
+(cycle_pos += 1) == window_length ? cycle_pos = 0; // reset cycle

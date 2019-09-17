@@ -1,8 +1,14 @@
 /*
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
+
  Tremolo effect. Contains an evelope that modifies the shape of the effect.
- Needs tempo sync and pop removal.
+
+ Needs (a lot of) help:
+ - Needs sample-accurate automation.
+ - Code is outdated.
+ - Some discontinuities exist in processed signal.
+ - Comments!
  */
 desc:N-Tremolo
 

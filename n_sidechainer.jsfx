@@ -1,0 +1,238 @@
+/*
+ Nicholas Lenz
+ Github : nicholaslenz12@gmail.com
+
+ Tempo synced envelope-altering plugin. Future update to sync to midi input.
+
+ code structure based on:
+
+
+ Needs help:
+ - Fix sample-accurate automation (fade, shape, length)
+ - Comments!
+ */
+desc:N-Sidechainer
+
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
+slider1:2<0,5,1>Sync
+slider2:0.6<0,1,0.01>Mix
+slider3:500<10,1000,1>Fade (Samples)
+slider4:0<0,1,0.01>Shape
+slider5:0.6<0,1,0.01>Length
+slider6:0<0,1,{Audio,MIDI}>Source
+
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+@init
+src_sync  = tgt_sync  = slider1;
+src_mix   = tgt_mix   = slider2;
+src_fade  = tgt_fade  = slider3;
+src_shape = tgt_shape = slider4;
+src_len   = tgt_len   = slider5;
+
+cycle_position = 0;
+
+prop = 0;
+init = 1;
+update = 0;
+
+function Generate_envelope(shape, len, offset)
+(
+    phase1 = len*period|0;
+    phase2 = period - phase1;
+    x = 0;
+    loop(phase1,
+        period[x+offset] = (1-shape)*min((x/phase1)^2,1) + shape*min(sqrt(x/phase1),1);
+        x += 1;
+    );
+    loop(phase2,
+        period[x+offset] = 1;
+        x += 1
+    );
+);
+
+function Generate_fade(fade, offset)
+(
+    x = 0;
+    loop(fade,
+        period[period-fade+x+offset] *= 1 - min(x/fade,1);
+        x += 1;
+    );
+);
+
+
+// ----------------------------------------------------------------------------
+// SLIDER
+// ----------------------------------------------------------------------------
+@slider
+
+tgt_sync  = slider1;
+tgt_mix   = slider2;
+tgt_fade  = slider3;
+tgt_shape = slider4;
+tgt_len   = slider5;
+
+
+// ----------------------------------------------------------------------------
+// BLOCK
+// ----------------------------------------------------------------------------
+@block
+
+t = 0;
+
+power  = 2^src_sync/4;
+period = srate*240/tempo/power/4|0;
+
+d_sync  = (tgt_sync - src_sync)/samplesblock;
+d_mix   = (tgt_mix - src_mix)/samplesblock;
+d_fade  = (tgt_fade - src_fade)/samplesblock;
+d_shape = (tgt_shape - src_shape)/samplesblock;
+d_len   = (tgt_len - src_len)/samplesblock;
+
+t_sync  = src_sync;
+t_mix   = src_mix;
+t_fade  = src_fade;
+t_shape = src_shape;
+t_len   = src_len;
+
+src_sync  = tgt_sync;
+src_mix   = tgt_mix;
+src_fade  = tgt_fade;
+src_shape = tgt_shape;
+src_len   = tgt_len;
+
+d_sync != 0
+|| d_mix != 0
+|| d_fade != 0
+|| d_shape != 0
+|| d_len != 0
+|| init ?
+(
+    Generate_envelope(src_shape, src_len, 0);
+    Generate_fade(src_fade, 0);
+    Generate_envelope(tgt_shape, tgt_len, period);
+    Generate_fade(tgt_fade, period);
+);
+
+prop = (beat_position - floor(beat_position*power)/power)*power;
+init ?
+(
+    cycle_position = period*prop;
+    init = 0;
+);
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
+@sample
+
+src_spl0 = spl0;
+src_spl1 = spl1;
+
+t_sync  += d_sync;
+t_mix   += d_mix;
+t_fade  += d_fade;
+t_shape += d_shape;
+t_len   += d_len;
+
+t_env_pos = (t*period[cycle_position+period]
+    + (samplesblock - t)*period[cycle_position])/samplesblock;
+
+spl0 *= t_env_pos;
+spl1 *= t_env_pos;
+spl0 = t_mix*spl0 + (1-t_mix)*src_spl0;
+spl1 = t_mix*spl1 + (1-t_mix)*src_spl1;
+
+t += 1;
+
+(cycle_position += 1) > period ? cycle_position = 0;
+
+// ----------------------------------------------------------------------------
+// SAMPLE
+// ----------------------------------------------------------------------------
+@gfx 100 200
+gfx_setfont(1,"Menlo",gfx_h/8,'b');
+
+gfx_r = gfx_g = gfx_b = 0.25;
+gfx_line(0,gfx_h/6,gfx_w,gfx_h/6);
+gfx_line(0,2*gfx_h/6,gfx_w,2*gfx_h/6);
+gfx_line(0,3*gfx_h/6,gfx_w,3*gfx_h/6);
+gfx_line(0,4*gfx_h/6,gfx_w,4*gfx_h/6);
+gfx_line(0,5*gfx_h/6,gfx_w,5*gfx_h/6);
+
+gfx_g = gfx_b = 0;
+
+gfx_x = 0;
+gfx_y = 0.015*gfx_h;
+src_sync == 0 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/1");
+
+gfx_x = 0;
+gfx_y = gfx_h/6 + 0.015*gfx_h;
+src_sync == 1 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/2");
+
+gfx_x = 0;
+gfx_y = 2*gfx_h/6 + 0.015*gfx_h;
+src_sync == 2 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/4");
+
+gfx_x = 0;
+gfx_y = 3*gfx_h/6 + 0.015*gfx_h;
+src_sync == 3 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/8");
+
+gfx_x = 0;
+gfx_y = 4*gfx_h/6 + 0.015*gfx_h;
+src_sync == 4 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/16");
+
+gfx_x = 0;
+gfx_y = 5*gfx_h/6 + 0.015*gfx_h;
+src_sync == 5 ? gfx_r = 1 : gfx_r = 0.2;
+gfx_drawstr("1/32");
+
+gfx_x = 0;
+gfx_y = gfx_h;
+
+gfx_r = gfx_g = gfx_b = 1;
+
+loop(gfx_w,
+    gfx_lineto(gfx_x + 1, src_mix*(gfx_h - gfx_h*period[gfx_x*period/gfx_w])|0);
+);
+
+gfx_r = 1;
+gfx_g = gfx_b = 0;
+
+env_h = src_mix*(gfx_h - gfx_h*period[prop*period])|0;
+env_w = gfx_w*prop|0;
+
+gfx_circle(env_w,env_h,3, 1);
+gfx_line(env_w,gfx_h,env_w,env_h);
+
+
+mouse_cap ?
+(
+    mouse_y < gfx_h/6 ? src_sync = slider1 = 0:
+    mouse_y < 2*gfx_h/6 ? src_sync =  slider1 = 1 :
+    mouse_y < 3*gfx_h/6 ? src_sync = slider1 = 2 :
+    mouse_y < 4*gfx_h/6 ? src_sync = slider1 = 3 :
+    mouse_y < 5*gfx_h/6 ? src_sync = slider1 = 4 :
+    src_sync = slider1 = 5;
+    !play_state ?
+    (
+        Generate_envelope(src_shape, src_len,0);
+        Generate_fade(src_fade,0);
+    );
+)

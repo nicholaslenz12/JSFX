@@ -1,9 +1,13 @@
 # JSFX
-A collection of JSFX plugins compatible with REAPER (Digital Audio Workstation)
+A collection of audio effects written in JSFX. There are compatible with REAPER
+(Digital Audio Workstation).
 
 ## The current effects are:
-- mono
-- distortion
+- N-Compressor
 - N-Delay
-- N-Filer
+- N-Distortion
+- N-Sidechainer
 - N-Tremolo
+- Bitcrusher
+- Filter
+- Mono

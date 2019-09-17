@@ -1,20 +1,21 @@
 /*
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
- Converts two channels to one channel.
+
+ Converts two channels of audio to a single channel.
 
  The various modes are:
  Left-mono
  Right-mono
  Stereo (averages the spl of both channels)
  */
-desc: Mono
+
+desc:Mono
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
 slider1:0<0,2,1{Left,Right,Stereo}>Channel Mode
-
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -24,24 +25,21 @@ in_pin:right input
 out_pin:left output
 out_pin:right output
 
-
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-mode = slider1;
-
+channel_mode = slider1;
 
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
-
-mode == 1 ? // Set to Right mode
+channel_mode == 1 ? // set to Right mode
 (
   spl0 = spl1;
-) : // Set to Left or Stereo mode
+) : // set to Left or Stereo mode
 (
-  mode == 2 ? spl0 = 0.5*(spl0 + spl1); // Average channels if set to Stereo
+  channel_mode == 2 ? spl0 = 0.5*(spl0 + spl1); // average channels if set to Stereo
   spl1 = spl0;
 );

@@ -10,8 +10,13 @@
  Arctan
  Cubic (x^3) (potential for higher-order, odd poly's later)
  Sine
+
+ Needs help:
+ - Needs sample-accurate automation.
+ - Needs some creativity.
  */
-desc: N-Distortion
+
+desc:N-Distortion
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
@@ -33,10 +38,10 @@ out_pin:right output
 // INIT
 // ----------------------------------------------------------------------------
 @init
-
 // Constants
 halfpi = 2*atan(1);
 
+// Mathematical Functions
 function tanh(x)
 (
   2/(1+7.389^(-x))-1;
@@ -57,73 +62,69 @@ function sine(x)
   abs(x) <= 1 ? sin(halfpi*x)/halfpi : sign(x);
 );
 
-
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-
-mode   = slider1;
-pre    = 2^(slider2/6);
-post   = 2^(slider3/6);
-cmode  = slider4;
-
-
+mode          = slider1;
+pre_gain      = 2^(slider2/6);
+post_gain     = 2^(slider3/6);
+channel_mode  = slider4;
 
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
 
-cmode == 0 ? // mono left
+channel_mode == 0 ? // mono left
 (
   mode == 0 ?
   (
-    spl0 = post*tanh(pre*spl0);
+    spl0 = post_gain*tanh(pre_gain*spl0);
   ) : mode == 1 ?
   (
-    spl0 = post*arctan(pre*spl0);
+    spl0 = post_gain*arctan(pre_gain*spl0);
   ) : mode == 2 ?
   (
-    spl0 = post*cubic(pre*spl0);
+    spl0 = post_gain*cubic(pre_gain*spl0);
   ) : mode == 3 ?
   (
-    spl0 = post*sine(pre*spl0);
+    spl0 = post_gain*sine(pre_gain*spl0);
   );
   spl1 = spl0;
-) : cmode == 1 ? // mono right
+) : channel_mode == 1 ? // mono right
 (
   mode == 0 ?
   (
-    spl1 = post*tanh(pre*spl1);
+    spl1 = post_gain*tanh(pre_gain*spl1);
   ) : mode == 1 ?
   (
-    spl1 = post*arctan(pre*spl1);
+    spl1 = post_gain*arctan(pre_gain*spl1);
   ) : mode == 2 ?
   (
-    spl1 = post*cubic(pre*spl1);
+    spl1 = post_gain*cubic(pre_gain*spl1);
   ) : mode == 3 ?
   (
-    spl1 = post*sine(pre*spl1);
+    spl1 = post_gain*sine(pre_gain*spl1);
   );
   spl0  = spl1;
-) : cmode == 2 ? // stereo
+) : channel_mode == 2 ? // stereo
 (
   mode == 0 ?
   (
-    spl0 = post*tanh(pre*spl0);
-    spl1 = post*tanh(pre*spl1);
+    spl0 = post_gain*tanh(pre_gain*spl0);
+    spl1 = post_gain*tanh(pre_gain*spl1);
   ) : mode == 1 ?
   (
-    spl0 = post*arctan(pre*spl0);
-    spl1 = post*arctan(pre*spl1);
+    spl0 = post_gain*arctan(pre_gain*spl0);
+    spl1 = post_gain*arctan(pre_gain*spl1);
   ) : mode == 2 ?
   (
-    spl0 = post*cubic(pre*spl0);
-    spl1 = post*cubic(pre*spl1);
+    spl0 = post_gain*cubic(pre_gain*spl0);
+    spl1 = post_gain*cubic(pre_gain*spl1);
   ) : mode == 3 ?
   (
-    spl0 = post*sine(pre*spl0);
-    spl1 = post*sine(pre*spl1);
+    spl0 = post_gain*sine(pre_gain*spl0);
+    spl1 = post_gain*sine(pre_gain*spl1);
   );
 );
