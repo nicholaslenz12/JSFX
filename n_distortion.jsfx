@@ -22,9 +22,10 @@ desc:N-Distortion
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
 slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
-slider2:12<-30,30,1>Input Gain (dB)
-slider3:-12<-30,30,1>Output Gain (dB)
+slider2:0<-30,30,1>Input Gain (dB)
+slider3:0<-30,30,1>Output Gain (dB)
 slider4:2<0,2,1{Left,Right,Stereo}>Channel Mode
+slider5:1000<1000,10000,100>RMS Size
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -62,6 +63,14 @@ function sine(x)
   abs(x) <= 1 ? sin(halfpi*x)/halfpi : sign(x);
 );
 
+t = 0;
+rms_L= 0;
+rms_R= 0;
+pre_spl0 = 0;
+pre_spl1 = 0;
+
+v1 = 0;
+
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
@@ -70,6 +79,7 @@ mode          = slider1;
 pre_gain      = 2^(slider2/6);
 post_gain     = 2^(slider3/6);
 channel_mode  = slider4;
+window_size   = slider5;
 
 // ----------------------------------------------------------------------------
 // SAMPLE
@@ -80,51 +90,165 @@ channel_mode == 0 ? // mono left
 (
   mode == 0 ?
   (
+    pre_spl0 = tanh(pre_gain*spl0);
     spl0 = post_gain*tanh(pre_gain*spl0);
   ) : mode == 1 ?
   (
-    spl0 = post_gain*arctan(pre_gain*spl0);
+    pre_spl0 = arctan(pre_gain*spl0);
+    spl0 = post_gain*pre_spl0;
   ) : mode == 2 ?
   (
-    spl0 = post_gain*cubic(pre_gain*spl0);
+    pre_spl0 = cubic(pre_gain*spl0);
+    spl0 = post_gain*pre_spl0;
   ) : mode == 3 ?
   (
-    spl0 = post_gain*sine(pre_gain*spl0);
+    pre_spl0 = sine(pre_gain*spl0);
+    spl0 = post_gain*pre_spl0;
   );
+  pre_spl1 = pre_spl0;
   spl1 = spl0;
 ) : channel_mode == 1 ? // mono right
 (
   mode == 0 ?
   (
-    spl1 = post_gain*tanh(pre_gain*spl1);
+    pre_spl1 = tanh(pre_gain*spl1);
+    spl1 = post_gain*pre_spl1;
   ) : mode == 1 ?
   (
-    spl1 = post_gain*arctan(pre_gain*spl1);
+    pre_spl1 = arctan(pre_gain*spl1);
+    spl1 = post_gain*pre_spl1;
   ) : mode == 2 ?
   (
-    spl1 = post_gain*cubic(pre_gain*spl1);
+    pre_spl1 = cubic(pre_gain*spl1);
+    spl1 = post_gain*pre_spl1;
   ) : mode == 3 ?
   (
-    spl1 = post_gain*sine(pre_gain*spl1);
+    pre_spl1 = sine(pre_gain*spl1);
+    spl1 = post_gain*pre_spl1;
   );
+  pre_spl0 = pre_spl1;
   spl0  = spl1;
 ) : channel_mode == 2 ? // stereo
 (
   mode == 0 ?
   (
-    spl0 = post_gain*tanh(pre_gain*spl0);
-    spl1 = post_gain*tanh(pre_gain*spl1);
+    pre_spl0 = tanh(pre_gain*spl0);
+    pre_spl1 = tanh(pre_gain*spl1);
+    spl0 = post_gain*pre_spl0;
+    spl1 = post_gain*pre_spl1;
   ) : mode == 1 ?
   (
-    spl0 = post_gain*arctan(pre_gain*spl0);
-    spl1 = post_gain*arctan(pre_gain*spl1);
+    pre_spl0 = arctan(pre_gain*spl0);
+    pre_spl1 = arctan(pre_gain*spl1);
+    spl0 = post_gain*pre_spl0;
+    spl1 = post_gain*pre_spl1;
   ) : mode == 2 ?
   (
-    spl0 = post_gain*cubic(pre_gain*spl0);
-    spl1 = post_gain*cubic(pre_gain*spl1);
+    pre_spl0 = cubic(pre_gain*spl0);
+    pre_spl1 = cubic(pre_gain*spl1);
+    spl0 = post_gain*pre_spl0;
+    spl1 = post_gain*pre_spl1;
   ) : mode == 3 ?
   (
-    spl0 = post_gain*sine(pre_gain*spl0);
-    spl1 = post_gain*sine(pre_gain*spl1);
+    pre_spl0 = sine(pre_gain*spl0);
+    pre_spl1 = sine(pre_gain*spl1);
+    spl0 = post_gain*pre_spl0;
+    spl1 = post_gain*pre_spl1;
   );
+);
+
+rms_total_L -= t[0];
+t[0] = sqr(pre_spl0);
+rms_total_L += t[0];
+rms_total_R -= t[window_size];
+t[window_size] = sqr(pre_spl1);
+rms_total_R += t[window_size];
+
+t+2 > window_size ? t = 0 : t += 1;
+
+// ----------------------------------------------------------------------------
+// GRAPHICS
+// ----------------------------------------------------------------------------
+@gfx 400 400
+gfx_setfont(1,"Menlo",0.03125*gfx_h,'b');
+
+gfx_r = gfx_g = 0;
+gfx_b = 1;
+gfx_x = rms_x_R;
+gfx_y = gfx_h;
+gfx_rectto(0,0.96*gfx_h);
+
+gfx_r = gfx_g = gfx_b = 0.3;
+gfx_line(0,gfx_y,gfx_w,gfx_y);
+
+gfx_r = 1;
+gfx_g = gfx_b = 0;
+gfx_rectto(rms_x_L,0.92*gfx_h);
+
+gfx_g = gfx_b = 1;
+
+gfx_x = 0.95*gfx_w;
+gfx_y = 0.92*gfx_h;
+gfx_drawstr("L");
+gfx_x = 0.95*gfx_w;
+gfx_y = 0.96*gfx_h;
+gfx_drawstr("R");
+
+gfx_r = gfx_g = gfx_b = 0.3;
+
+gfx_x = gfx_w;
+gfx_y = 0;
+gfx_lineto(0,gfx_h);
+
+gfx_r = gfx_g = gfx_b = 1;
+rms_L = sqrt(rms_total_L/window_size);
+rms_R = sqrt(rms_total_R/window_size);
+rms_x_L = gfx_w*rms_L;
+rms_x_R = gfx_w*rms_R;
+
+x = 0;
+mode == 0 ?
+(
+loop(gfx_w,
+    gfx_lineto(x,gfx_h - gfx_h*tanh(x/gfx_w));
+    x += 1;
+);
+) : mode == 1 ?
+(
+loop(gfx_w,
+    gfx_lineto(x,gfx_h - gfx_h*arctan(x/gfx_w));
+    x += 1;
+);
+) : mode == 2 ?
+(
+loop(gfx_w,
+    gfx_lineto(x,gfx_h - gfx_h*cubic(x/gfx_w));
+    x += 1;
+);
+) : mode == 3 ?
+(
+loop(gfx_w,
+    gfx_lineto(x,gfx_h - gfx_h*sine(x/gfx_w));
+    x += 1;
+);
+);
+
+channel_mode != 1 ?
+(
+gfx_r = 1;
+gfx_g = gfx_b = 0;
+mode == 0 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*tanh(rms_x_L/gfx_w),5,1);)
+: mode == 1 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*arctan(rms_x_L/gfx_w),5,1);)
+: mode == 2 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*cubic(rms_x_L/gfx_w),5,1);)
+: mode == 3 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*sine(rms_x_L/gfx_w),5,1););
+);
+
+channel_mode != 0 ?
+(
+gfx_r = gfx_g = 0;
+gfx_b = 1;
+mode == 0 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*tanh(rms_x_R/gfx_w),5,1);)
+: mode == 1 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*arctan(rms_x_R/gfx_w),5,1);)
+: mode == 2 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*cubic(rms_x_R/gfx_w),5,1);)
+: mode == 3 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*sine(rms_x_R/gfx_w),5,1);)
 );

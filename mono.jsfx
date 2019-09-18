@@ -43,3 +43,4 @@ channel_mode == 1 ? // set to Right mode
   channel_mode == 2 ? spl0 = 0.5*(spl0 + spl1); // average channels if set to Stereo
   spl1 = spl0;
 );
+

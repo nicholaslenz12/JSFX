@@ -8,6 +8,15 @@
  Needs help:
  - Code is outdated.
  - Needs sample-accurate automation.
+ - GUI doesn't work correctly for abs(width) < 1
+ > Make GUI like:
+   |     |     |         |     |     |
+   | | : | | : | | : ->  | : | | : | | :
+   -----------------    -----------------
+   Rather than:
+   
+        *     '      ->      '     *     
+   -----------------    -----------------
  */
 
 desc:N-Delay
@@ -19,9 +28,9 @@ slider1:200<1,2000,1>Length (ms)
 slider2:40<0,100,1>Feedback
 slider3:30<0,100,1>Mix
 slider4:100<-100,100,1>Width
-slider6:1<0,1,1{Off,On}>Tempo Sync
+slider6:1<0,1,{Off,On}>Tempo Sync
 slider7:.5<.125,1,.125>Fraction of Quarter Note
-slider8:1<0,1,1{Stereo,Ping-Pong}>Delay Mode
+slider8:1<0,1,{Stereo,Ping-Pong}>Delay Mode
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -74,7 +83,7 @@ effect_right = delay_buffer[1];
 
 delay_mode > 0 ? // If set to Ping-Pong
 (
-  pp == 1 ? // Current echo is in right channel
+  pp == 0 ? // Current echo is in left channel
   (
     // Set value in feedback loop, per channel
     delay_buffer[0] = spl0 + effect_left*feedback;
@@ -82,7 +91,7 @@ delay_mode > 0 ? // If set to Ping-Pong
 
     // Set current sample value, per channel
     spl0 = (spl0*dry_mix + width*effect_left*mix);
-    spl1 = (spl1*dry_mix + rev_widht*effect_right*mix);
+    spl1 = (spl1*dry_mix + rev_width*effect_right*mix);
   ) :  // Current echo is in left channel
   (
     // Set value in feedback loop, per channel
@@ -90,7 +99,7 @@ delay_mode > 0 ? // If set to Ping-Pong
     delay_buffer[1] = spl1 + effect_right*feedback;
 
     // Set current sample value, per channel
-    spl0 = (spl0*dry_mix + rev_widht*effect_left*mix);
+    spl0 = (spl0*dry_mix + rev_width*effect_left*mix);
     spl1 = (spl1*dry_mix + width*effect_right*mix);
   );
 ): // If set to Stereo
@@ -108,4 +117,37 @@ delay_mode > 0 ? // If set to Ping-Pong
 (
   cycle_pos = 0; // Reset sample position of delay
   pp = 1 - pp; // Switch primary channel for Ping-Pong
+);
+
+// ----------------------------------------------------------------------------
+// GRAPHICS
+// ----------------------------------------------------------------------------
+@gfx 200 100
+gfx_x = gfx_w/4;
+gfx_y = gfx_h/2;
+
+gfx_r = gfx_g = 0;
+gfx_b = 1;
+
+// gfx_circle(gfx_x, gfx_y, 1/2^log10(1/spl0)*min(gfx_w/8,gfx_h/4), 1);
+
+gfx_r = gfx_g = 1;
+
+pp == 0 || delay_mode == 0 ?
+(
+    effect_left > 0 ?
+    (
+        gfx_circle(gfx_x, gfx_y, 1/2^-log10(effect_left)*min(gfx_w/8,gfx_h/4), 1);
+    )
+);
+
+gfx_x = 3*gfx_w/4;
+gfx_y = gfx_h/2;
+
+pp == 1 || delay_mode == 0 ?
+(
+    effect_right > 0 ?
+    (
+        gfx_circle(gfx_x, gfx_y, 1/2^-log10(effect_right)*min(gfx_w/8,gfx_h/4), 1);
+    )
 );
