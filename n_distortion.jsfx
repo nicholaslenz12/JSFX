@@ -22,10 +22,11 @@ desc:N-Distortion
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
 slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
-slider2:0<-30,30,1>Input Gain (dB)
-slider3:0<-30,30,1>Output Gain (dB)
-slider4:2<0,2,1{Left,Right,Stereo}>Channel Mode
-slider5:1000<1000,10000,100>RMS Size
+slider2:2<0,2,1{Left,Right,Stereo}>Channel Mode
+slider3:0<-30,30,0.01>Input Gain (dB)
+slider4:0<-30,30,0.01>Output Gain (dB)
+slider5:5000<100,10000,100>RMS Size
+slider6:1<1,5,0.01>Zoom
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -60,7 +61,7 @@ function cubic(x)
 
 function sine(x)
 (
-  abs(x) <= 1 ? sin(halfpi*x)/halfpi : sign(x);
+  abs(x) <= 1 ? sin(halfpi*x)/halfpi : sign(x)/halfpi;
 );
 
 t = 0;
@@ -69,17 +70,16 @@ rms_R= 0;
 pre_spl0 = 0;
 pre_spl1 = 0;
 
-v1 = 0;
-
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
 mode          = slider1;
-pre_gain      = 2^(slider2/6);
-post_gain     = 2^(slider3/6);
-channel_mode  = slider4;
+channel_mode  = slider2;
+pre_gain      = 2^(slider3/6);
+post_gain     = 2^(slider4/6);
 window_size   = slider5;
+zoom          = slider6;
 
 // ----------------------------------------------------------------------------
 // SAMPLE
@@ -172,20 +172,48 @@ t+2 > window_size ? t = 0 : t += 1;
 @gfx 400 400
 gfx_setfont(1,"Menlo",0.03125*gfx_h,'b');
 
+rms_L = sqrt(rms_total_L/window_size);
+rms_R = sqrt(rms_total_R/window_size);
+rms_post_L = sqrt(sqr(post_gain)*rms_total_L/window_size);
+rms_post_R = sqrt(sqr(post_gain)*rms_total_R/window_size);
+rms_x_L = zoom*gfx_w*rms_L;
+rms_x_R = zoom*gfx_w*rms_R;
+rms_post_x_L = zoom*gfx_w*rms_post_L;
+rms_post_x_R = zoom*gfx_w*rms_post_R;
+
+meter_top = 0.92*gfx_h;
+
+gfx_r = gfx_g = gfx_b = 0.2;
+gfx_line(0.125*gfx_w,0,0.125*gfx_w,gfx_h);
+gfx_line(0.25*gfx_w,0,0.25*gfx_w,gfx_h);
+gfx_line(0.375*gfx_w,0,0.375*gfx_w,gfx_h);
+gfx_line(0.5*gfx_w,0,0.5*gfx_w,gfx_h);
+gfx_line(0.625*gfx_w,0,0.625*gfx_w,gfx_h);
+gfx_line(0.75*gfx_w,0,0.75*gfx_w,gfx_h);
+gfx_line(0.875*gfx_w,0,0.875*gfx_w,gfx_h);
+
 gfx_r = gfx_g = 0;
 gfx_b = 1;
 gfx_x = rms_x_R;
 gfx_y = gfx_h;
-gfx_rectto(0,0.96*gfx_h);
+gfx_rectto(0,0.98*gfx_h);
+gfx_b = 0.5;
+gfx_rectto(rms_post_x_R,0.96*gfx_h);
 
-gfx_r = gfx_g = gfx_b = 0.3;
-gfx_line(0,gfx_y,gfx_w,gfx_y);
+gfx_r = gfx_g = gfx_b = 0.2;
+gfx_line(0,0.96*gfx_h,gfx_w,0.96*gfx_h);
+
+gfx_x = 0;
+gfx_y = 0.96*gfx_h;
 
 gfx_r = 1;
 gfx_g = gfx_b = 0;
-gfx_rectto(rms_x_L,0.92*gfx_h);
+gfx_rectto(rms_x_L,0.94*gfx_h);
+gfx_r = 0.5;
+gfx_x = 0;
+gfx_rectto(rms_post_x_L,meter_top);
 
-gfx_g = gfx_b = 1;
+gfx_r = gfx_g = gfx_b = 1;
 
 gfx_x = 0.95*gfx_w;
 gfx_y = 0.92*gfx_h;
@@ -194,41 +222,36 @@ gfx_x = 0.95*gfx_w;
 gfx_y = 0.96*gfx_h;
 gfx_drawstr("R");
 
-gfx_r = gfx_g = gfx_b = 0.3;
+gfx_r = gfx_g = gfx_b = 0.4;
 
 gfx_x = gfx_w;
 gfx_y = 0;
-gfx_lineto(0,gfx_h);
+gfx_lineto(0,meter_top);
 
 gfx_r = gfx_g = gfx_b = 1;
-rms_L = sqrt(rms_total_L/window_size);
-rms_R = sqrt(rms_total_R/window_size);
-rms_x_L = gfx_w*rms_L;
-rms_x_R = gfx_w*rms_R;
-
 x = 0;
 mode == 0 ?
 (
 loop(gfx_w,
-    gfx_lineto(x,gfx_h - gfx_h*tanh(x/gfx_w));
+    gfx_lineto(x,meter_top - zoom*meter_top*tanh(x/gfx_w/zoom));
     x += 1;
 );
 ) : mode == 1 ?
 (
 loop(gfx_w,
-    gfx_lineto(x,gfx_h - gfx_h*arctan(x/gfx_w));
+    gfx_lineto(x,meter_top - zoom*meter_top*arctan(x/gfx_w/zoom));
     x += 1;
 );
 ) : mode == 2 ?
 (
 loop(gfx_w,
-    gfx_lineto(x,gfx_h - gfx_h*cubic(x/gfx_w));
+    gfx_lineto(x,meter_top - zoom*meter_top*cubic(x/gfx_w/zoom));
     x += 1;
 );
 ) : mode == 3 ?
 (
 loop(gfx_w,
-    gfx_lineto(x,gfx_h - gfx_h*sine(x/gfx_w));
+    gfx_lineto(x,meter_top - zoom*meter_top*sine(x/gfx_w/zoom));
     x += 1;
 );
 );
@@ -237,18 +260,18 @@ channel_mode != 1 ?
 (
 gfx_r = 1;
 gfx_g = gfx_b = 0;
-mode == 0 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*tanh(rms_x_L/gfx_w),5,1);)
-: mode == 1 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*arctan(rms_x_L/gfx_w),5,1);)
-: mode == 2 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*cubic(rms_x_L/gfx_w),5,1);)
-: mode == 3 ? (gfx_circle(rms_x_L,gfx_h - gfx_h*sine(rms_x_L/gfx_w),5,1););
+mode == 0 ? (gfx_circle(rms_x_L,meter_top - meter_top*tanh(rms_L)*zoom,5,1);)
+: mode == 1 ? (gfx_circle(rms_x_L,meter_top - meter_top*arctan(rms_L)*zoom,5,1);)
+: mode == 2 ? (gfx_circle(rms_x_L,meter_top - meter_top*cubic(rms_L)*zoom,5,1);)
+: mode == 3 ? (gfx_circle(rms_x_L,meter_top - meter_top*sine(rms_L)*zoom,5,1););
 );
 
 channel_mode != 0 ?
 (
 gfx_r = gfx_g = 0;
 gfx_b = 1;
-mode == 0 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*tanh(rms_x_R/gfx_w),5,1);)
-: mode == 1 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*arctan(rms_x_R/gfx_w),5,1);)
-: mode == 2 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*cubic(rms_x_R/gfx_w),5,1);)
-: mode == 3 ? (gfx_circle(rms_x_R,gfx_h - gfx_h*sine(rms_x_R/gfx_w),5,1);)
+mode == 0 ? (gfx_circle(rms_x_R,meter_top - meter_top*tanh(rms_R)*zoom,5,1);)
+: mode == 1 ? (gfx_circle(rms_x_R,meter_top - meter_top*arctan(rms_R)*zoom,5,1);)
+: mode == 2 ? (gfx_circle(rms_x_R,meter_top - meter_top*cubic(rms_R)*zoom,5,1);)
+: mode == 3 ? (gfx_circle(rms_x_R,meter_top - meter_top*sine(rms_R)*zoom,5,1);)
 );
