@@ -25,8 +25,9 @@ slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
 slider2:2<0,2,1{Left,Right,Stereo}>Channel Mode
 slider3:0<-30,30,0.01>Input Gain (dB)
 slider4:0<-30,30,0.01>Output Gain (dB)
-slider5:5000<100,10000,100>RMS Size
+slider5:5000<100,20000,100>RMS Size
 slider6:1<1,5,0.01>Zoom
+slider7:16<1,32,1>Sections
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -74,12 +75,17 @@ pre_spl1 = 0;
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-mode          = slider1;
-channel_mode  = slider2;
-pre_gain      = 2^(slider3/6);
-post_gain     = 2^(slider4/6);
-window_size   = slider5;
-zoom          = slider6;
+mode           = slider1;
+channel_mode   = slider2;
+pre_gain       = 2^(slider3/6);
+post_gain      = 2^(slider4/6);
+window_size    = slider5;
+zoom           = slider6;
+dividers = slider7;
+last_idx       = window_size-2;
+start_post_rms_L = 2*window_size;
+start_post_rms_R = 3*window_size;
+
 
 // ----------------------------------------------------------------------------
 // SAMPLE
@@ -88,190 +94,154 @@ zoom          = slider6;
 
 channel_mode == 0 ? // mono left
 (
-  mode == 0 ?
-  (
-    pre_spl0 = tanh(pre_gain*spl0);
-    spl0 = post_gain*tanh(pre_gain*spl0);
-  ) : mode == 1 ?
-  (
-    pre_spl0 = arctan(pre_gain*spl0);
-    spl0 = post_gain*pre_spl0;
-  ) : mode == 2 ?
-  (
-    pre_spl0 = cubic(pre_gain*spl0);
-    spl0 = post_gain*pre_spl0;
-  ) : mode == 3 ?
-  (
-    pre_spl0 = sine(pre_gain*spl0);
-    spl0 = post_gain*pre_spl0;
-  );
-  pre_spl1 = pre_spl0;
-  spl1 = spl0;
+    pre_spl0 = pre_spl1 = spl0;
+    mode == 0 ?
+    (
+        spl0 = post_gain*tanh(pre_gain*pre_spl0);
+    ) : mode == 1 ?
+    (
+        spl0 = post_gain*arctan(pre_gain*pre_spl0);
+    ) : mode == 2 ?
+    (
+        spl0 = post_gain*cubic(pre_gain*pre_spl0);
+    ) : mode == 3 ?
+    (
+        spl0 = post_gain*sine(pre_gain*pre_spl0);
+    );
+    spl1 = spl0;
 ) : channel_mode == 1 ? // mono right
 (
-  mode == 0 ?
-  (
-    pre_spl1 = tanh(pre_gain*spl1);
-    spl1 = post_gain*pre_spl1;
-  ) : mode == 1 ?
-  (
-    pre_spl1 = arctan(pre_gain*spl1);
-    spl1 = post_gain*pre_spl1;
-  ) : mode == 2 ?
-  (
-    pre_spl1 = cubic(pre_gain*spl1);
-    spl1 = post_gain*pre_spl1;
-  ) : mode == 3 ?
-  (
-    pre_spl1 = sine(pre_gain*spl1);
-    spl1 = post_gain*pre_spl1;
-  );
-  pre_spl0 = pre_spl1;
-  spl0  = spl1;
+    pre_spl0 = pre_spl1 = spl1;
+    mode == 0 ?
+    (
+        spl1 = post_gain*tanh(pre_gain*pre_spl1);
+    ) : mode == 1 ?
+    (
+        spl1 = post_gain*arctan(pre_gain*pre_spl1);
+    ) : mode == 2 ?
+    (
+        spl1 = post_gain*cubic(pre_gain*pre_spl1);
+    ) : mode == 3 ?
+    (
+        spl1 = post_gain*sine(pre_gain*pre_spl1);
+    );
+    spl0 = spl1;
 ) : channel_mode == 2 ? // stereo
 (
-  mode == 0 ?
-  (
-    pre_spl0 = tanh(pre_gain*spl0);
-    pre_spl1 = tanh(pre_gain*spl1);
-    spl0 = post_gain*pre_spl0;
-    spl1 = post_gain*pre_spl1;
-  ) : mode == 1 ?
-  (
-    pre_spl0 = arctan(pre_gain*spl0);
-    pre_spl1 = arctan(pre_gain*spl1);
-    spl0 = post_gain*pre_spl0;
-    spl1 = post_gain*pre_spl1;
-  ) : mode == 2 ?
-  (
-    pre_spl0 = cubic(pre_gain*spl0);
-    pre_spl1 = cubic(pre_gain*spl1);
-    spl0 = post_gain*pre_spl0;
-    spl1 = post_gain*pre_spl1;
-  ) : mode == 3 ?
-  (
-    pre_spl0 = sine(pre_gain*spl0);
-    pre_spl1 = sine(pre_gain*spl1);
-    spl0 = post_gain*pre_spl0;
-    spl1 = post_gain*pre_spl1;
-  );
+    pre_spl0 = spl0;
+    pre_spl1 = spl1;
+    mode == 0 ?
+    (
+        spl0 = post_gain*tanh(pre_gain*pre_spl0);
+        spl1 = post_gain*tanh(pre_gain*pre_spl1);
+    ) : mode == 1 ?
+    (
+        spl0 = post_gain*arctan(pre_gain*pre_spl0);
+        spl1 = post_gain*arctan(pre_gain*pre_spl1);
+    ) : mode == 2 ?
+    (
+        spl0 = post_gain*cubic(pre_gain*pre_spl0);
+        spl1 = post_gain*cubic(pre_gain*pre_spl1);
+    ) : mode == 3 ?
+    (
+        spl0 = post_gain*sine(pre_gain*pre_spl0);
+        spl1 = post_gain*sine(pre_gain*pre_spl1);
+    );
 );
 
-rms_total_L -= t[0];
-t[0] = sqr(pre_spl0);
-rms_total_L += t[0];
+rms_total_L -= t[];
+t[] = sqr(pre_spl0);
+rms_total_L += t[];
 rms_total_R -= t[window_size];
 t[window_size] = sqr(pre_spl1);
 rms_total_R += t[window_size];
 
-t+2 > window_size ? t = 0 : t += 1;
+post_rms_total_L -= t[start_post_rms_L];
+t[start_post_rms_L] = sqr(spl0);
+post_rms_total_L += t[start_post_rms_L];
+post_rms_total_R -= t[start_post_rms_R];
+t[start_post_rms_R] = sqr(spl1);
+post_rms_total_R += t[start_post_rms_R];
+
+
+t > last_idx ? t = 0 : t += 1;
 
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
-@gfx 400 400
-gfx_setfont(1,"Menlo",0.03125*gfx_h,'b');
+@gfx 400 100
+
+font_separation = 0.05;
+
+2*gfx_h/5 > font_separation*gfx_w ?
+(
+font_position = 0;
+font_size = font_separation*gfx_w;
+)
+:
+(
+font_position = 1;
+font_size = 2*gfx_h/5;
+);
+gfx_setfont(1, "Menlo", font_size, 'b');
 
 rms_L = sqrt(rms_total_L/window_size);
 rms_R = sqrt(rms_total_R/window_size);
-rms_post_L = sqrt(sqr(post_gain)*rms_total_L/window_size);
-rms_post_R = sqrt(sqr(post_gain)*rms_total_R/window_size);
+rms_post_L = sqrt(post_rms_total_L/window_size);
+rms_post_R = sqrt(post_rms_total_R/window_size);
 rms_x_L = zoom*gfx_w*rms_L;
 rms_x_R = zoom*gfx_w*rms_R;
 rms_post_x_L = zoom*gfx_w*rms_post_L;
 rms_post_x_R = zoom*gfx_w*rms_post_R;
 
-meter_top = 0.92*gfx_h;
-
 gfx_r = gfx_g = gfx_b = 0.2;
-gfx_line(0.125*gfx_w,0,0.125*gfx_w,gfx_h);
-gfx_line(0.25*gfx_w,0,0.25*gfx_w,gfx_h);
-gfx_line(0.375*gfx_w,0,0.375*gfx_w,gfx_h);
-gfx_line(0.5*gfx_w,0,0.5*gfx_w,gfx_h);
-gfx_line(0.625*gfx_w,0,0.625*gfx_w,gfx_h);
-gfx_line(0.75*gfx_w,0,0.75*gfx_w,gfx_h);
-gfx_line(0.875*gfx_w,0,0.875*gfx_w,gfx_h);
+x = 0;
+loop(dividers,
+    gfx_line(x*gfx_w/dividers,0,x*gfx_w/dividers,gfx_h);
+    x += 1;
+);
+
+top_rms_R = 3*gfx_h/4;
+top_rms_post_R = 2*gfx_h/4;
+top_rms_L = 1*gfx_h/4;
 
 gfx_r = gfx_g = 0;
 gfx_b = 1;
 gfx_x = rms_x_R;
 gfx_y = gfx_h;
-gfx_rectto(0,0.98*gfx_h);
+gfx_rectto(0,top_rms_R);
 gfx_b = 0.5;
-gfx_rectto(rms_post_x_R,0.96*gfx_h);
+gfx_rectto(rms_post_x_R,top_rms_post_R);
 
 gfx_r = gfx_g = gfx_b = 0.2;
-gfx_line(0,0.96*gfx_h,gfx_w,0.96*gfx_h);
+gfx_line(0,top_rms_post_R,gfx_w,top_rms_post_R);
 
 gfx_x = 0;
-gfx_y = 0.96*gfx_h;
+gfx_y = top_rms_post_R;
 
 gfx_r = 1;
 gfx_g = gfx_b = 0;
-gfx_rectto(rms_x_L,0.94*gfx_h);
+gfx_rectto(rms_x_L,top_rms_L);
 gfx_r = 0.5;
 gfx_x = 0;
 gfx_rectto(rms_post_x_L,meter_top);
 
 gfx_r = gfx_g = gfx_b = 1;
 
-gfx_x = 0.95*gfx_w;
-gfx_y = 0.92*gfx_h;
-gfx_drawstr("L");
-gfx_x = 0.95*gfx_w;
-gfx_y = 0.96*gfx_h;
-gfx_drawstr("R");
-
-gfx_r = gfx_g = gfx_b = 0.4;
-
-gfx_x = gfx_w;
-gfx_y = 0;
-gfx_lineto(0,meter_top);
-
-gfx_r = gfx_g = gfx_b = 1;
-x = 0;
-mode == 0 ?
+gfx_x = (1-font_separation)*gfx_w;
+font_position ?
 (
-loop(gfx_w,
-    gfx_lineto(x,meter_top - zoom*meter_top*tanh(x/gfx_w/zoom));
-    x += 1;
-);
-) : mode == 1 ?
+  gfx_y = 0;
+  gfx_drawstr("L");
+  gfx_x = (1-font_separation)*gfx_w;
+  gfx_y = top_rms_post_R;
+  gfx_drawstr("R");
+)
+:
 (
-loop(gfx_w,
-    gfx_lineto(x,meter_top - zoom*meter_top*arctan(x/gfx_w/zoom));
-    x += 1;
-);
-) : mode == 2 ?
-(
-loop(gfx_w,
-    gfx_lineto(x,meter_top - zoom*meter_top*cubic(x/gfx_w/zoom));
-    x += 1;
-);
-) : mode == 3 ?
-(
-loop(gfx_w,
-    gfx_lineto(x,meter_top - zoom*meter_top*sine(x/gfx_w/zoom));
-    x += 1;
-);
-);
-
-channel_mode != 1 ?
-(
-gfx_r = 1;
-gfx_g = gfx_b = 0;
-mode == 0 ? (gfx_circle(rms_x_L,meter_top - meter_top*tanh(rms_L)*zoom,5,1);)
-: mode == 1 ? (gfx_circle(rms_x_L,meter_top - meter_top*arctan(rms_L)*zoom,5,1);)
-: mode == 2 ? (gfx_circle(rms_x_L,meter_top - meter_top*cubic(rms_L)*zoom,5,1);)
-: mode == 3 ? (gfx_circle(rms_x_L,meter_top - meter_top*sine(rms_L)*zoom,5,1););
-);
-
-channel_mode != 0 ?
-(
-gfx_r = gfx_g = 0;
-gfx_b = 1;
-mode == 0 ? (gfx_circle(rms_x_R,meter_top - meter_top*tanh(rms_R)*zoom,5,1);)
-: mode == 1 ? (gfx_circle(rms_x_R,meter_top - meter_top*arctan(rms_R)*zoom,5,1);)
-: mode == 2 ? (gfx_circle(rms_x_R,meter_top - meter_top*cubic(rms_R)*zoom,5,1);)
-: mode == 3 ? (gfx_circle(rms_x_R,meter_top - meter_top*sine(rms_R)*zoom,5,1);)
+  gfx_y = gfx_h/4 - font_size/2;
+  gfx_drawstr("L");
+  gfx_x = (1-font_separation)*gfx_w;
+  gfx_y = 3*gfx_h/4 - font_size/2;
+  gfx_drawstr("R");
 );
