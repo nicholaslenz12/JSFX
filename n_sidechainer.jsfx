@@ -21,7 +21,7 @@ slider2:0.6<0,1,0.01>Mix
 slider3:500<10,1000,1>Fade (Samples)
 slider4:0<0,1,0.01>Shape
 slider5:0.6<0,1,0.01>Length
-slider6:0<0,1,{Audio,MIDI}>Source
+slider6:0<0,1,{Audio,MIDI}>Trigger
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -40,6 +40,7 @@ src_mix   = tgt_mix   = slider2;
 src_fade  = tgt_fade  = slider3;
 src_shape = tgt_shape = slider4;
 src_len   = tgt_len   = slider5;
+trig = slider6;
 
 cycle_position = 0;
 
