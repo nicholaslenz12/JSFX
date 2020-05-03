@@ -1,25 +1,24 @@
 /*
- Nicholas Lenz
- Github : nicholaslenz12@gmail.com
+Nicholas Lenz
+Github : nicholaslenz12@gmail.com
 
- Tempo synced envelope-altering plugin. Future update to sync to midi input.
+Tempo-synced enveloper plugin.
+*/
 
- Needs help:
- - Expensive on fast automation of fade and shape.
- - Pops and clicks for time trigger at ends of interval
- */
 desc:N-Sidechainer
+
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
 slider1:0<-2,2,1>Sync
 slider2:0.6<0,1,0.01>Mix
-slider3:500<10,1000,1>Fade (Samples)
-slider4:0<0,1,0.01>Shape
-slider5:0.6<0.01,1,0.01>Length
+slider3:0.99<0.01,0.95,0.01>Fade
+slider4:0.6<0.01,0.99,0.01>Length
+slider5:0<0,1,0.01>Shape
 slider6:0<0,1,{Time,MIDI}>Trigger
 slider7:1<1,16,1>Channel
+
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -29,36 +28,35 @@ in_pin:right input
 out_pin:left output
 out_pin:right output
 
+
 // ----------------------------------------------------------------------------
 // INIT
 // ----------------------------------------------------------------------------
 @init
-// Initialize the source and target parameters to the initial slider values.
-src_sync  = tgt_sync  = slider1;
-src_mix   = tgt_mix   = slider2;
+sync = slider1;
+src_mix   = tgt_mix = slider2;
 src_fade  = tgt_fade  = slider3;
-src_shape = tgt_shape = slider4;
-src_len   = tgt_len   = slider5;
+src_len   = tgt_len   = slider4;
+src_shape = tgt_shape = slider5;
 trigger_type = slider6;
-sidechain = slider7 - 1;
+channel_idx = slider7 - 1;
 
-Audio = 0;
+TIME = 0;
 MIDI = 1;
-activated = 0;
+midi_start = 0;
 
-max_length = 10000;
+envelope_length = 10000;
 
-// Position in the cyclic buffer, in samples.
-cycle_position_audio = 0;
+cycle_position_time = 0;
 cycle_position_midi = 0;
 
-// Envelope position
-envelope_position_audio = 0;
+envelop_position_time = 0;
+envelop_position_midi = 0;
 
 init = 1;
 update = 0;
 
-new_note_process = 0;
+process_new_note = 0;
 show_trigger = 0;
 
 function Positive_modulo(x, m)
@@ -73,33 +71,31 @@ function Positive_modulo(x, m)
     y
 );
 
-function Generate_envelope(shape, len, offset)
+function Envelope_at_position(len, fade, shape, pos)
 (
-    section1 = len * max_length | 0;
-    section2 = max_length - section1;
-    x = 0;
-    loop(section1,
-        // interpolate between quadratic and sqrt function
-        max_length[x + offset]
-        = (1 - shape) * min((x / section1) ^ 2, 1)
-        + shape * min(sqrt(x / section1),1);
-        x += 1;
-    );
-    loop(section2,
-        // Sample and hold at 1.
-        max_length[x + offset] = 1;
-        x += 1
-    );
-);
+    // attack phase
+    end_phase_1 = len * envelope_length | 0;
 
-function Generate_fade(fade, offset)
-(
-    x = 0;
-    loop(fade,
-        max_length[offset + (max_length - fade) + x]
-        *= 1 - min(x / fade, 1);
-        x += 1;
+    // sustain phase
+    end_phase_2 = end_phase_1 + fade * (envelope_length - end_phase_1);
+
+    pos < end_phase_1 ? // attack phase
+    (
+        gain =
+        (1 - shape) * (pos / end_phase_1) ^ 2
+        + shape * sqrt(pos / end_phase_1);
+    ): // sustain phase
+    (
+        pos < end_phase_2 ?
+        (
+            gain = 1;
+        ): // fade phase
+        (
+            gain = 1 - (pos - end_phase_2) / (envelope_length - end_phase_2);
+        )
     );
+
+    gain;
 );
 
 
@@ -107,159 +103,160 @@ function Generate_fade(fade, offset)
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-// Set the new target values
-tgt_sync  = slider1;
-tgt_mix   = slider2;
-tgt_fade  = slider3;
-tgt_shape = slider4;
-tgt_len   = slider5;
+sync = slider1;
+tgt_mix = slider2;
+tgt_fade = slider3;
+tgt_len = slider4;
+tgt_shape = slider5;
 trigger_type = slider6;
-sidechain = slider7 - 1;
+channel_idx = slider7 - 1;
+
 
 // ----------------------------------------------------------------------------
 // BLOCK
 // ----------------------------------------------------------------------------
 @block
-
-while (midirecv(offset,msg1,msg2,msg3))
+// See here: https://www.admiralbumblebee.com
+while (midirecv(offset, msg1, msg2, msg3))
 (
     note_on = msg1 & $xF0;
     channel = msg1 & $x0F;
-    msg1 == $x90 && channel == sidechain ? // Detect note-ins of non-zero velocity
+
+    // Detect note-ins of non-zero velocity
+    msg1 == $x90 && channel == sidechain ?
     (
-        new_note_process = 1;
+        process_new_note = 1;
         show_trigger = 1;
-        activated = 1;
+        midi_start = 1;
     );
-    midisend(offset,msg1,msg2,msg3);
+    midisend(offset, msg1, msg2, msg3);
 );
 
-smooth = 0;
-t = 0;
+smooth = 0; // Smooth for new midi note
+t = 0; // Reset interpolation idx
+L = 2 ^ (-sync); // Convert the sync value to a proportion
+del = envelope_length * tempo / (60 * srate * L); // samples -> envelope units
 
-// Convert the sync value to a proportion
-L = 2 ^ (-src_sync);
-del = max_length * tempo / (60 * srate * L); // Convertion envelope units to samples.
-
-// Compute changes in the each parameter
-del_sync  = (tgt_sync - src_sync) / samplesblock;
+// Set the paramter changes across each sample in block
 del_mix   = (tgt_mix - src_mix) / samplesblock;
+del_len   = (tgt_len - src_len) / samplesblock;
 del_fade  = (tgt_fade - src_fade) / samplesblock;
 del_shape = (tgt_shape - src_shape) / samplesblock;
-del_len   = (tgt_len - src_len) / samplesblock;
 
-// Set the new current values to the source values
-cur_sync  = src_sync;
+// Record the parameter values at block start
 cur_mix   = src_mix;
+cur_len   = src_len;
+cur_fade  = src_fade;
+cur_shape = src_shape;
 
-// Set the new source values to the target values
-src_sync  = tgt_sync;
+// Set the source values to the target parameter values
 src_mix   = tgt_mix;
+src_len   = tgt_len;
 src_fade  = tgt_fade;
 src_shape = tgt_shape;
-src_len   = tgt_len;
 
-del_fade != 0
-|| del_shape != 0
-|| del_len != 0
-|| init ? update = 1;
+// Envelope position as proportion of way though cycle (beats)
+envelope_position_time = Positive_modulo(beat_position, L) / L;
 
-update ?
-(
-    Generate_envelope(src_shape, src_len, 0);
-    Generate_envelope(tgt_shape, tgt_len, max_length);
-    trigger_type == Audio ?
-    (
-        Generate_fade(src_fade, 0);
-        Generate_fade(tgt_fade, max_length);
-    ) :
-    (
-        Generate_fade(0, 0);
-        Generate_fade(0, max_length);
-    );
+// Envelope position as proportion of way though cycle (midi trigger)
+envelope_position_midi = cycle_position_midi / envelope_length;
 
-    update = 0;
-);
-
-envelope_position_audio = Positive_modulo(beat_position, L) / L;
-envelope_position_midi = cycle_position_midi / max_length;
-
+// Set cycle position at appropriate place in cycle at start of playback
 init ?
 (
-    cycle_position_audio = max_length * envelope_position_audio;
+    cycle_position_time = envelope_length * envelope_position_time;
     init = 0;
 );
 
-new_note_process ?
+process_new_note ? // Detected a new note on
 (
-    old_env_value = max_length[cycle_position_midi];
+    old_env_val = Envelope_at_position(
+        cur_len,
+        cur_fade,
+        cur_shape,
+        cycle_position_midi
+    );
     smooth = 1;
     cycle_position_midi = 0;
-    new_note_process = 0;
+    process_new_note = 0;
 );
 
-end_phase_1 = min(max_length * src_len - 1, max_length - src_fade - 1)
 
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
+cur_spl0 = spl0;
+cur_spl1 = spl1;
 
-src_spl0 = spl0;
-src_spl1 = spl1;
+// Adjust parameter value for new sample in block
+cur_mix   += del_mix;
+cur_len   += del_len;
+cur_fade  += del_fade;
+cur_shape += del_shape;
 
-cur_sync += del_sync;
-cur_mix  += del_mix;
-
-trigger_type == Audio ?
+trigger_type == TIME ?
 (
-    t_env_pos = (t * max_length[cycle_position_audio + max_length]
-        + (samplesblock - t) * max_length[cycle_position_audio]) / samplesblock;
-) :
-(
-    t_env_pos = (t * max_length[cycle_position_midi + max_length]
-        + (samplesblock - t) * max_length[cycle_position_midi]) / samplesblock;
-);
+    env_val = Envelope_at_position(
+        cur_len,
+        cur_fade,
+        cur_shape,
+        cycle_position_time
+    );
 
-smooth ?
-(
-    spl0 *= (t * t_env_pos + (samplesblock - t) * old_env_value) / samplesblock;
-    spl1 *= (t * t_env_pos + (samplesblock - t) * old_env_value) / samplesblock;
+    spl0 *= env_val;
+    spl1 *= env_val;
 ):
 (
-    spl0 *= t_env_pos;
-    spl1 *= t_env_pos;
+    env_val = Envelope_at_position(
+        cur_len,
+        cur_fade,
+        cur_shape,
+        cycle_position_midi
+    );
+
+    smooth ?
+    (
+        spl0 *= (t * env_val + (samplesblock - t) * old_env_val) / samplesblock;
+        spl1 *= (t * env_val + (samplesblock - t) * old_env_val) / samplesblock;
+    ):
+    (
+        spl0 *= env_val;
+        spl1 *= env_val;
+    );
 );
 
+spl0 = cur_mix * spl0 + (1 - cur_mix) * cur_spl0;
+spl1 = cur_mix * spl1 + (1 - cur_mix) * cur_spl1;
 
+t += 1; // increment interpolation parameter
+cycle_position_time += del;
 
-spl0 = cur_mix * spl0 + (1 - cur_mix) * src_spl0;
-spl1 = cur_mix * spl1 + (1 - cur_mix) * src_spl1;
+// Reset
+cycle_position_time >= envelope_length ?
+(
+    cycle_position_time = 0;
+);
 
-t += 1;
-
-cycle_position_audio += del;
-cycle_position_audio | 0 >= max_length ? cycle_position_audio = 0;
-
-activated ?
+midi_start ?
 (
     cycle_position_midi += del;
 
     cycle_position_midi >= end_phase_1 ?
     (
         cycle_position_midi = end_phase_1;
-        activated = 0;
+        midi_start = 0;
     );
-) :
+):
 (
     cycle_position_midi = end_phase_1;
 );
+
 
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
 @gfx 100 200
-
 // Set the font + font size
 gfx_setfont(1, "Menlo", gfx_h / 8, 'b');
 
@@ -274,20 +271,19 @@ gfx_g = gfx_b = 0;
 gfx_r = 1;
 
 // Draw time
-trigger_type == Audio ?
+trigger_type == TIME ?
 (
     gfx_x = 0;
     gfx_y = 0.015 * gfx_h;
-    src_sync == -2 ? gfx_drawstr("1/1");
-    src_sync == -1 ? gfx_drawstr("1/2");
-    src_sync == 0 ? gfx_drawstr("1/4");
-    src_sync == 1 ? gfx_drawstr("1/8");
-    src_sync == 2 ? gfx_drawstr("1/16");
+    sync == -2 ? gfx_drawstr("1/1");
+    sync == -1 ? gfx_drawstr("1/2");
+    sync == 0 ? gfx_drawstr("1/4");
+    sync == 1 ? gfx_drawstr("1/8");
+    sync == 2 ? gfx_drawstr("1/16");
 );
 
 // Set color to white
 gfx_r = gfx_g = gfx_b = 1;
-
 trigger_type == MIDI && show_trigger ?
 (
     gfx_circle(16, gfx_h / 8, gfx_h / 16, 1);
@@ -299,30 +295,46 @@ gfx_x = 0;
 gfx_y = gfx_h;
 
 // Draw the envelope
+z = 0;
 loop(gfx_w,
-    gfx_lineto(gfx_x + 1, src_mix * (gfx_h - gfx_h * max_length[gfx_x * max_length / gfx_w]) | 0);
+    gfx_lineto(
+        gfx_x + 1,
+        src_mix * (gfx_h - gfx_h * Envelope_at_position(
+            src_len,
+            src_fade,
+            src_shape,
+            envelope_length / gfx_w * z)) | 0);
+    z += 1;
 );
 
 // Set color to red
 gfx_r = 1;
 gfx_g = gfx_b = 0;
 
-trigger_type == Audio ?
+trigger_type == Time ?
 (
     // Set coordinates for the current position in the envelope
-    env_h = src_mix * (gfx_h - gfx_h * max_length[envelope_position_audio * max_length]) | 0;
-    env_w = gfx_w * envelope_position_audio | 0;
+    env_h = src_mix * (gfx_h - gfx_h * Envelope_at_position(
+        src_len,
+        src_fade,
+        src_shape,
+        envelope_length * envelope_position_time)) | 0;
+    env_w = gfx_w * envelope_position_time | 0;
 
     // Draw current position marker on envelope.
-    gfx_circle(env_w ,env_h, 3, 1);
+    gfx_circle(env_w , env_h, 3, 1);
     gfx_line(env_w, gfx_h, env_w, env_h);
 ) : // Trigger is MIDI
 (
     // Set coordinates for the current position in the envelope
-    env_h = src_mix * (gfx_h - gfx_h * max_length[envelope_position_midi * max_length]) | 0;
+    env_h = src_mix * (gfx_h - gfx_h * Envelope_at_position(
+        src_len,
+        src_fade,
+        src_shape,
+        envelope_length * envelope_position_midi)) | 0;
     env_w = gfx_w * envelope_position_midi | 0;
 
     // Draw current position marker on envelope.
-    gfx_circle(env_w ,env_h, 3, 1);
+    gfx_circle(env_w , env_h, 3, 1);
     gfx_line(env_w, gfx_h, env_w, env_h);
 );
