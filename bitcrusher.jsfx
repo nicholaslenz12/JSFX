@@ -37,10 +37,9 @@ r = 0;
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-a = srate-1;
-val = a*2^slider2+(1-a);
+val = 2^(10*(1-slider2));
 bits = slider1;
-cycle_length = ((srate/val)|0)-1; // hold length
+cycle_length = (val|0)-1; // hold length
 granularity = 1/((2^bits)|0); // reciprocal of new bit depth
 
 

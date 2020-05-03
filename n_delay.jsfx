@@ -1,4 +1,4 @@
-/*
+ /*
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
 
@@ -12,7 +12,6 @@
    | | : | | : | | : ->  | : | | : | | :
    -----------------    -----------------
  */
-
 desc:N-Delay
 
 // ----------------------------------------------------------------------------
@@ -24,7 +23,6 @@ slider3:50<0,100,1>Mix
 slider4:100<-100,100,1>Width
 slider5:.5<.125,1,.125>Fraction of Quarter Note
 slider6:1<0,1,{Off,On}>Tempo Sync
-slider7:1<0,1,{Stereo,Ping-Pong}>Delay Mode
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -39,27 +37,39 @@ out_pin:right output
 // ----------------------------------------------------------------------------
 @init
 init = 1;
-cycle_pos = 0;
+cycle_index = 0;
 
-src_len      = tgt_len      = slider1;
-src_feedback = tgt_feedback = slider2/100;
-src_mix      = tgt_mix      = slider3/100;
-src_width    = tgt_width    = (slider4+100)/200;
-src_rate     = tgt_rate     = slider5;
+source_feedback = target_feedback = slider2/100;
+source_mix      = target_mix      = slider3/100;
+source_width    = target_width    = (slider4+100)/200;
+
+length = 0;
+rate = 0;
+
+delta = 1;
+
+function bound(value, lower, upper)
+(
+  max(min(value, upper), lower);
+);
 
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-tgt_len      = slider1;
-tgt_feedback = slider2/100;
-tgt_mix      = slider3/100;
-tgt_width    = (slider4+100)/200;
-tgt_rate     = slider5;
-tempo_sync   = slider6;
-delay_mode   = slider7;
+target_feedback = slider2/100;
+target_mix      = slider3/100;
+target_width    = (slider4+100)/200;
 
-delay_mode == 1 ? pp = 0;
+(slider1 != length) || (slider5 != rate) || (slider6 != tempo_sync) ? delta = 1;
+
+length     = slider1;
+rate       = slider5;
+tempo_sync = slider6;
+
+pp = 0;
+l_pp_gain = 0;
+r_pp_gain = 0;
 
 // ----------------------------------------------------------------------------
 // BLOCK
@@ -67,111 +77,68 @@ delay_mode == 1 ? pp = 0;
 @block
 // set delay length in samples.
 
-d_delay_len  = 0;
-d_delta_size = 0;
-
-init ?
+delta ?
 (
     tempo_sync ?
     (
-        delay_len = src_rate*srate*60/tempo;
-        delta_size = delay_len/10;
+        delay_samples = rate*srate*60/tempo;
     ) :
     (
-        delay_len = slider1*srate/1000;
-        delta_size = delay_len/10;
+        delay_samples = length*srate/1000;
     );
-    init = 0;
+    delta = 0;
 );
 
-d_len      = (tgt_len - src_len)/samplesblock;
-d_mix      = (tgt_mix - src_mix)/samplesblock;
-d_feedback = (tgt_feedback - src_feedback)/samplesblock;
-d_width    = (tgt_width - src_width)/samplesblock;
-d_rate     = (tgt_rate - src_rate)/samplesblock;
+delta_mix      = (target_mix - source_mix)/samplesblock;
+delta_feedback = (target_feedback - source_feedback)/samplesblock;
+delta_width    = (target_width - source_width)/samplesblock;
 
-t_len       = src_len;
-t_mix       = src_mix;
-t_feedback  = src_feedback;
-t_width     = src_width;
-t_rate      = src_rate;
-t_delay_len = src_delay_len;
+current_mix      = source_mix;
+current_feedback = source_feedback;
+current_width    = source_width;
 
-src_len      = tgt_len;
-src_mix      = tgt_mix;
-src_feedback = tgt_feedback;
-src_width    = tgt_width;
-src_rate     = tgt_rate;
-
-tempo_sync && d_rate != 0 ?
-(
-    d_delay_len  = d_rate*srate*60/tempo; // Questionable
-    d_delta_size = d_delay_len/10;
-);
-
-!tempo_sync && d_len != 0 ?
-(
-    d_delay_len  = d_len*srate/1000; // Questionable
-    d_delta_size = d_delay_len/10;
-);
+source_mix      = target_mix;
+source_feedback = target_feedback;
+source_width    = target_width;
 
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
-t_len      += d_len;
-t_mix      += d_mix;
-t_feedback += d_feedback;
-t_width    += d_width;
-t_rate     += d_rate;
-delay_len  += d_delay_len;
-delta_size += d_delta_size;
+current_mix         += delta_mix;
+reverse_mix          = 1 - current_mix;
+current_feedback    += delta_feedback;
+current_width       += delta_width;
 
-// Allocate memory
-delay_buffer = 2*cycle_pos;
+// Draw from memory
+delay_buffer = 2*cycle_index;
 effect_left  = delay_buffer[0];
 effect_right = delay_buffer[1];
+delay_buffer[0] = spl0 + effect_left*current_feedback;
+delay_buffer[1] = spl1 + effect_right*current_feedback;
 
-delta_width = ((delta_size - delta)*t_width + delta*(1 - t_width))/delta_size;
-delta_rev_width = 1 - delta_width;
+current_reverse_width = 1 - current_width;
 
-delay_mode > 0 ? // If set to Ping-Pong
+pp == 0 ?
 (
-    // Set value in feedback loop, per channel
-    delay_buffer[0] = ave + effect_left*t_feedback;
-    delay_buffer[1] = ave + effect_right*t_feedback;
-    ave = (spl0 + spl1)/2;
-
-    pp == 0 ? // Current echo is in left channel
-    (
-        // Set current sample value, per channel
-        spl0 = ave*(1 - t_mix) + delta_width*effect_left*t_mix;
-        spl1 = ave*(1 - t_mix) + delta_rev_width*effect_right*t_mix;
-    ) :  // Current echo is in left channel
-    (
-        // Set current sample value, per channel
-        spl0 = ave*(1 - t_mix) + delta_rev_width*effect_left*t_mix;
-        spl1 = ave*(1 - t_mix) + delta_width*effect_right*t_mix;
-    );
-): // If set to Stereo
+    spl0 = spl0*reverse_mix + r_pp_gain*effect_left*current_mix*current_reverse_width;
+    spl1 = spl1*reverse_mix + r_pp_gain*effect_right*current_mix*current_width;
+    r_pp_gain = min(1, r_pp_gain + max(1/100, 1/delay_samples));
+    l_pp_gain = 1 - r_pp_gain;
+) :
 (
-    // Set value in feedback loop, per channel
-    delay_buffer[0] = spl0 + effect_left*t_feedback;
-    delay_buffer[1] = spl1 + effect_right*t_feedback;
-
-    // Set current sample value, per channel
-    spl0 = spl0*(1 - t_mix) + effect_left*t_mix;
-    spl1 = spl1*(1 - t_mix) + effect_right*t_mix;
+    spl0 = spl0*reverse_mix + l_pp_gain*effect_left*current_mix*current_width;
+    spl1 = spl1*reverse_mix + l_pp_gain*effect_right*current_mix*current_reverse_width;
+    r_pp_gain = max(0, r_pp_gain - max(1/100, 1/delay_samples));
+    l_pp_gain = 1 - r_pp_gain;
 );
 
-delta > 0 ? delta -= 1 : delta = 0;
-
-cycle_pos += 1 > delay_len ? // If last sample for current echo reached
+(cycle_index += 1) > delay_samples ? // If last sample for current echo reached
 (
-    cycle_pos = 0; // Reset sample position of delay
+    cycle_index = 0; // Reset sample position of delay
     pp = 1 - pp; // Switch primary channel for Ping-Pong
-    delta = delta_size;
 );
+
 
 // ----------------------------------------------------------------------------
 // GRAPHICS

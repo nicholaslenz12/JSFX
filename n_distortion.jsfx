@@ -43,26 +43,67 @@ out_pin:right output
 @init
 // Constants
 halfpi = 2*atan(1);
+quarterpi = halfpi / 2;
+pisquared = $pi * $pi;
+
+a1 = -.0000067436811832;
+a2 = .2468149110712040;
+a3 = .0583691066395175;
+a4 = .03357335044280075;
+
+b1 = .2464845986383725;
+b2 = .0609347197060491;
+b3 = .1086202599228572;
+b4 = .02874707922475963;
+
 
 // Mathematical Functions
 function tanh(x)
 (
-  2/(1+7.389^(-x))-1;
+  //2/(1+7.389^(-x))-1;
+  x >= 0 ?
+  (
+  (a1 + (a2 + (a3 + a4 * x) * x) * x) / (b1 + (b2 + (b3 + b4 * x) * x) * x);
+  ) :
+  (
+  -(a1 + (a2 + (a3 + a4 * -x) * -x) * -x) / (b1 + (b2 + (b3 + b4 * -x) * -x) * -x);
+  );
 );
 
 function arctan(x)
-(
-  atan(halfpi*x)/halfpi;
+( 
+  x >= 0 ?
+  (
+  quarterpi * x + 0.273 * x * (1 - x);
+  ) :
+  (
+  quarterpi * x + 0.273 * x * (1 + x);
+  );
 );
 
 function cubic(x)
 (
-  abs(x) <= 1 ? x - x^3/3 : sign(x)*2/3;
+  abs(x) <= 1 ? x - x*x*x/3 : sign(x)*2/3;
 );
 
 function sine(x)
 (
-  abs(x) <= 1 ? sin(halfpi*x)/halfpi : sign(x)/halfpi;
+  xscaled = halfpi * x;
+  abs(x) > 1 ?
+  (
+  sign(x) / halfpi;
+  ) :
+  (
+  x >= 0 ?
+  (
+  16 * xscaled * ($pi - xscaled) / (5 * pisquared - 4 * xscaled * ($pi - xscaled)) / halfpi;
+  ) :
+  (
+  xscaled *= -1;
+  -16 * xscaled * ($pi - xscaled) / (5 * pisquared - 4 * xscaled * ($pi - xscaled)) / halfpi;
+  );
+  );
+  
 );
 
 t = 0;

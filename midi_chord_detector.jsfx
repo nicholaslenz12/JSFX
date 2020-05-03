@@ -1,0 +1,301 @@
+/*
+Nicholas Lenz
+Github : nicholaslenz12@gmail.com
+
+MIDI "Chord"/Note Detector Plugin
+
+Needs help:
+- Chord Detection
+- Comments!
+*/
+desc:Midi Chord Detector
+
+
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
+slider1:0<0,11,1>Key
+slider2:0<0,3,1>Modifier
+slider3:12<1,12,1>Max Notes Displayed
+
+
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+@init
+// Midi/scale paramters
+max_midi = 127;
+scale_notes = 7;
+scale_size = 12;
+
+// Western scale constants
+per_fifth = 7;
+dim_fifth = 6;
+min_third = 3;
+maj_third = 4;
+
+// Voice/note detection
+active_voices = 0;
+key_set = 0;
+
+// (String) Addresses
+root_guess = 0;
+scale_address = 2048;
+note_address = 2*2048;
+chord_address = 3*2048;
+
+// Slider initialization
+key = slider1;
+mod = slider2;
+
+/*
+MIDI_TO_NOTE
+    Converts a given midi message to alphabetic musical notation
+    midi_value: value of midi message corresponding to pitch
+*/
+function midi_to_note(midi_value)
+(
+    scale_value = midi_value % scale_size;
+    scale_value == 0 ? note = "C";
+    scale_value == 1 ? note = "C#";
+    scale_value == 2 ? note = "D";
+    scale_value == 3 ? note= "D#";
+    scale_value == 4 ? note = "E";
+    scale_value == 5 ? note = "F";
+    scale_value == 6 ? note = "F#";
+    scale_value == 7 ? note = "G";
+    scale_value == 8 ? note = "G#";
+    scale_value == 9 ? note = "A";
+    scale_value == 10 ? note = "A#";
+    scale_value == 11 ? note = "B";
+    note;
+);
+
+/*
+NOTE_IN_SCALE
+    Determines if a given midi note is in a partical scale
+    midi_value: value of midi message corresponding to pitch
+*/
+function note_in_scale(midi_value)
+(
+    scale_value = midi_value % scale_size;
+    in_scale = 0;
+    x = 0;
+    loop(scale_notes,
+        scale_address[x += 1] == scale_value ? in_scale = 1;
+    );
+    in_scale;
+);
+
+/*
+CHECK_INTERVAL
+*/
+function check_interval(start_idx, idx, block_size, interval)
+(
+    return = 0;
+    idx + interval > block_size ?
+    (
+        remaining = idx + interval - block_size;
+        (start_idx + remaining)[0] ? return = 1;
+    ):
+    (
+        (start_idx + (idx + interval) % 12)[0] ? return = 1;
+    );
+    return;
+);
+
+/*
+DETECT_CHORDS
+    *Currently* detects the potential root notes of a chord.
+    >> Needs help <<
+*/
+function detect_chords()
+(
+    best_chord_match = 0;
+    x = 0;
+    loop(scale_size,
+        note_address[x] ?
+        (
+            chord_address[x]
+            += 2*check_interval(note_address,x,scale_size,per_fifth);
+            chord_address[x]
+            += 2*check_interval(note_address,x,scale_size,dim_fifth);
+            chord_address[x]
+            += check_interval(note_address,x,scale_size,maj_third);
+            chord_address[x]
+            += check_interval(note_address,x,scale_size,min_third);
+            chord_address[x] > best_chord_match ?
+            (
+                best_chord_match = chord_address[x];
+            );
+        );
+        x += 1;
+    );
+
+    x = 0;
+    loop(scale_size,
+        chord_address[x] == best_chord_match ?
+        (
+            chord_address[x] >= 3 ?
+            (
+                strcat(root_guess,midi_to_note(x));
+                strcat(root_guess,"!!!");
+            );
+            chord_address[x] == 2 ?
+            (
+                strcat(root_guess,midi_to_note(x));
+                strcat(root_guess,"!!");
+            );
+        );
+        x += 1;
+    );
+);
+
+
+// ----------------------------------------------------------------------------
+// SLIDER
+// ----------------------------------------------------------------------------
+@slider
+max_notes_displayed = slider3;
+key != slider1 || mod != slider2 ? key_set = 0;
+
+!key_set ?
+(
+    slider2 == 0 ? // Specify intervals in maj scale
+    (
+        scale_address[0] = 0;
+        scale_address[1] = 2;
+        scale_address[2] = 4;
+        scale_address[3] = 5;
+        scale_address[4] = 7;
+        scale_address[5] = 9;
+        scale_address[6] = 11;
+    ) : slider2 == 1 ? // Specify intervals in natural min scale
+    (
+        scale_address[0] = 0;
+        scale_address[1] = 2;
+        scale_address[2] = 3;
+        scale_address[3] = 5;
+        scale_address[4] = 7;
+        scale_address[5] = 8;
+        scale_address[6] = 10;
+    ) : slider2 == 2 ? // Specify intervals in harmonic min scale
+    (
+        scale_address[0] = 0;
+        scale_address[1] = 2;
+        scale_address[2] = 3;
+        scale_address[3] = 5;
+        scale_address[4] = 6;
+        scale_address[5] = 9;
+        scale_address[6] = 10;
+    ) : // Specify intervals in melodic min scale
+    (
+        scale_address[0] = 0;
+        scale_address[1] = 2;
+        scale_address[2] = 3;
+        scale_address[3] = 5;
+        scale_address[4] = 7;
+        scale_address[5] = 9;
+        scale_address[6] = 10;
+    );
+
+    x = 0;
+    loop(scale_notes,
+        scale_address[x] = (scale_address[x] + slider1) % scale_size;
+        x += 1;
+    );
+    key_set = 1;
+    key = slider1;
+    mod = slider2;
+);
+
+
+// ----------------------------------------------------------------------------
+// BLOCK
+// ----------------------------------------------------------------------------
+@block
+while (midirecv(offset,msg1,msg2,msg3))
+(
+    msg1 == $x90 && msg3 != 0 ? // Detect note-ins of non-zero velocity
+    (
+        active_voices += 1;
+        msg2[0] = 1;
+        note_address[msg2 % scale_size] = 1; // Add note to list of current notes
+        fade = srate;
+    ) :
+    msg1 == $x80 ? // Detect note-outs.
+    (
+        active_voices -= 1;
+        msg2[0] = 0;
+        note_address[msg2 % scale_size] = 0; // Remove note to list of current notes
+        fade = srate;
+    );
+    midisend(offset,msg1,msg2,msg3);
+);
+
+
+// ----------------------------------------------------------------------------
+// GRAPHICS
+// ----------------------------------------------------------------------------
+@gfx 500 100
+gfx_x = gfx_y = 0;
+gfx_setfont(1,"Menlo",min(gfx_w/15,gfx_h/2));
+
+notes_displayed = 0;
+y = 0;
+while (y < max_midi && notes_displayed < max_notes_displayed)
+(
+    y[0] ?
+    (
+        note_in_scale(y) ?
+        (
+            gfx_r = gfx_g = gfx_b = 1;
+        ):(
+            gfx_r = 1;
+            gfx_g = gfx_b = 0;
+        );
+        gfx_drawstr(midi_to_note(y));
+        notes_displayed += 1;
+    );
+    y += 1;
+);
+
+gfx_r = gfx_g = gfx_b = 1;
+gfx_x = gfx_w*3/5;
+gfx_drawstr("Key: ");
+
+slider1 == 0 ? (gfx_drawstr("C ");)
+: slider1 == 1 ? (gfx_drawstr("C#");)
+: slider1 == 2 ? (gfx_drawstr("D ");)
+: slider1 == 3 ? (gfx_drawstr("D#");)
+: slider1 == 4 ? (gfx_drawstr("E ");)
+: slider1 == 5 ? (gfx_drawstr("F ");)
+: slider1 == 6 ? (gfx_drawstr("F#");)
+: slider1 == 7 ? (gfx_drawstr("G ");)
+: slider1 == 8 ? (gfx_drawstr("G#");)
+: slider1 == 9 ? (gfx_drawstr("A ");)
+: slider1 == 10 ? (gfx_drawstr("A#");)
+: slider1 == 11 ? (gfx_drawstr("B "););
+
+slider2 == 0 ? (gfx_drawstr("M");)
+: slider2 == 1 ? (gfx_drawstr("Nm");)
+: slider2 == 2 ? (gfx_drawstr("Hm");)
+: slider2 == 3 ? (gfx_drawstr("Mm"););
+
+gfx_y = gfx_h/2;
+gfx_x = 0;
+strcpy(root_guess,"");
+memset(chord_address,0,scale_size);
+detect_chords();
+gfx_drawstr(root_guess);
+
+z = check_interval(note_address,5,scale_size,per_fifth);

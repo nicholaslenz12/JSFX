@@ -1,0 +1,151 @@
+desc:N-Visualizer
+
+// ----------------------------------------------------------------------------
+// SLIDER DEFINITIONS
+// ----------------------------------------------------------------------------
+slider1:9<9,14,1>FFT Order
+slider2:10<10,30,1>Update Frequency
+slider3:-90<-150,-40,1>Noise Floor
+
+// ----------------------------------------------------------------------------
+// DEFAULT CHANNEL CONFIGURATION
+// ----------------------------------------------------------------------------
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+x = 0;
+high_index = 2 ^ 16;
+high_index_2 = 2 ^ 17;
+update = 0;
+
+function HannWindow(start_sample, dest_start_sample, window_size)
+(
+h = 0;
+loop(window_size,
+  dest_start_sample[h] = start_sample[h] * sin($pi * h / window_size)^2;
+  h += 1;
+  );
+);
+
+function Smooth(start_sample, window_size)
+(
+// Rudimentary convol.
+
+
+w1 = 0.1;
+w2 = 0.2;
+w3 = 0.4;
+w4 = 0.2;
+w5 = 0.1;
+
+h = 0;
+loop(window_size,
+  h == 0 ? start_sample[h] = w5 * start_sample[h];
+  h == 1 ? start_sample[h] = w4 * start_sample[h-1]
+  + w5 * start_sample[h];
+  h == 2 ? start_sample[h] = w3 * start_sample[h-2]
+  + w4 * start_sample[h-1]
+  + w5 * start_sample[h];
+  h == 3 ? start_sample[h] = w2 * start_sample[h-3]
+  + w3 * start_sample[h-2]
+  + w4 * start_sample[h-1]
+  + w5 * start_sample[h];
+
+  h > 3 ? start_sample[h] = w1 * start_sample[h-4]
+  + w2 * start_sample[h-3]
+  + w3 * start_sample[h-2]
+  + w4 * start_sample[h-1]
+  + w5 * start_sample[h];
+);
+
+
+/*
+k = 10;
+h = 0;
+
+loop(window_size,
+  h += 1;
+  h < k ?
+  (
+    sum = 0;
+    l = 0;
+    loop(h,
+      sum += start_sample[l];
+      l += 1;
+      );
+    start_sample[h-1] = sum / h;
+  );
+
+  h >= k ?
+  (
+    sum = 0;
+    l = 0;
+    loop(k,
+      sum += start_sample[h - 1 - k + l];
+      l += 1;
+    );
+    start_sample[h-1] = sum / k;
+  );
+);
+*/
+
+);
+
+@slider
+order = slider1;
+update_freq = slider2;
+minSpl = 10^(slider3 / 20);
+update_tick_max = srate / update_freq | 0;
+fft_size = 2 ^ order;
+nBins = fft_size / 2;
+
+@sample
+x[fft_size] = spl0;
+x += 1;
+x >= update_tick_max ?
+(
+// Move data to high sample numbers, window
+HannWindow(update_tick_max, high_index, fft_size);
+
+// Compute FFT at high indices
+fft_real(high_index, fft_size);
+
+// Permute real values 0 -> Nyquist
+fft_permute(high_index, nBins);
+
+// Copy spectral samples to memory region for display
+memcpy(fft_size + update_tick_max + 1, high_index, nBins);
+
+// Move data over for overlap
+memcpy(0, update_tick_max, fft_size);
+
+// Reset sample index
+x = 0;
+);
+
+@gfx
+// Compute log scale.
+nyq = srate / 2;
+step = nyq / (nBins - 1);
+min_freq = 20; // Hz
+a = gfx_w / log10(nyq / min_freq);
+b = -a * log10(min_freq);
+
+gfx_r = gfx_g = gfx_b = 1;
+gfx_x = gfx_y = 0;
+
+Smooth(fft_size + update_tick_max + 1, nBins);
+
+i = 0;
+loop(nBins,
+i == 0 ? pos = 0 : pos = log10(step*i);
+val = abs(fft_size[i + update_tick_max + 1]);
+val < 0.0001 ? val = 0.0001;
+
+gfx_lineto(a * pos + b, gfx_h - 20 * log10(val));
+
+i += 1;
+);
