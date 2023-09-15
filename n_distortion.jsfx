@@ -1,4 +1,4 @@
-/*
+ /*
  Nicholas Lenz
  Github : nicholaslenz12@gmail.com
  Distorts a signal based on 4 non-linear functions.
@@ -25,8 +25,7 @@ slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
 slider2:2<0,2,1{Left,Right,Stereo}>Channel Mode
 slider3:0<-30,30,0.01>Input Gain (dB)
 slider4:0<-30,30,0.01>Output Gain (dB)
-slider5:5000<100,20000,100>RMS Size
-slider6:1<1,5,0.01>Zoom
+slider5:400<1,2000,1>RMS Size (ms)
 slider7:16<1,32,1>Sections
 
 // ----------------------------------------------------------------------------
@@ -112,6 +111,8 @@ rms_R= 0;
 pre_spl0 = 0;
 pre_spl1 = 0;
 
+floor_db = -120;
+
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
@@ -120,8 +121,7 @@ mode           = slider1;
 channel_mode   = slider2;
 pre_gain       = 2^(slider3/6);
 post_gain      = 2^(slider4/6);
-window_size    = slider5;
-zoom           = slider6;
+window_size    = floor(srate * slider5 / 1000);
 dividers = slider7;
 last_idx       = window_size-2;
 start_post_rms_L = 2*window_size;
@@ -190,19 +190,19 @@ channel_mode == 0 ? // mono left
     );
 );
 
-rms_total_L -= t[];
-t[] = sqr(pre_spl0);
-rms_total_L += t[];
-rms_total_R -= t[window_size];
+rms_total_L   -= t[];
+t[]            = sqr(pre_spl0);
+rms_total_L   += t[];
+rms_total_R   -= t[window_size];
 t[window_size] = sqr(pre_spl1);
-rms_total_R += t[window_size];
+rms_total_R   += t[window_size];
 
-post_rms_total_L -= t[start_post_rms_L];
+post_rms_total_L   -= t[start_post_rms_L];
 t[start_post_rms_L] = sqr(spl0);
-post_rms_total_L += t[start_post_rms_L];
-post_rms_total_R -= t[start_post_rms_R];
+post_rms_total_L   += t[start_post_rms_L];
+post_rms_total_R   -= t[start_post_rms_R];
 t[start_post_rms_R] = sqr(spl1);
-post_rms_total_R += t[start_post_rms_R];
+post_rms_total_R   += t[start_post_rms_R];
 
 
 t > last_idx ? t = 0 : t += 1;
@@ -226,14 +226,14 @@ font_size = 2*gfx_h/5;
 );
 gfx_setfont(1, "Menlo", font_size, 'b');
 
-rms_L = sqrt(rms_total_L/window_size);
-rms_R = sqrt(rms_total_R/window_size);
-rms_post_L = sqrt(post_rms_total_L/window_size);
-rms_post_R = sqrt(post_rms_total_R/window_size);
-rms_x_L = zoom*gfx_w*rms_L;
-rms_x_R = zoom*gfx_w*rms_R;
-rms_post_x_L = zoom*gfx_w*rms_post_L;
-rms_post_x_R = zoom*gfx_w*rms_post_R;
+rms_L      = (max(5 * log(rms_total_L/window_size), floor_db) - floor_db) / -floor_db;
+rms_R      = (max(5 * log(rms_total_R/window_size), floor_db) - floor_db) / -floor_db;
+rms_post_L = (max(5 * log(post_rms_total_L/window_size), floor_db) - floor_db) / -floor_db;
+rms_post_R = (max(5 * log(post_rms_total_R/window_size), floor_db) - floor_db) / -floor_db;
+rms_x_L = gfx_w*rms_L;
+rms_x_R = gfx_w*rms_R;
+rms_post_x_L = gfx_w*rms_post_L;
+rms_post_x_R = gfx_w*rms_post_R;
 
 gfx_r = gfx_g = gfx_b = 0.2;
 x = 0;
