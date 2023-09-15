@@ -11,5 +11,3 @@ A collection of audio effects written as JSFX. There are compatible with REAPER
 - Bitcrusher
 - Filter
 - Mono
-
-## Interfaces for plugins with GUIs:
