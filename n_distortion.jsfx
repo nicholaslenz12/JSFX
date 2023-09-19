@@ -25,7 +25,7 @@ slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
 slider2:2<0,2,1{Left,Right,Stereo}>Channel Mode
 slider3:0<-30,30,0.01>Input Gain (dB)
 slider4:0<-30,30,0.01>Output Gain (dB)
-slider5:400<1,2000,1>RMS Size (ms)
+slider5:300<10,1000,1:log=300>RMS Size (ms)
 slider7:16<1,32,1>Sections
 
 // ----------------------------------------------------------------------------
@@ -127,7 +127,7 @@ dividers         = slider7;
 last_idx         = window_size-2;
 start_post_rms_L = 2*window_size;
 start_post_rms_R = 3*window_size;
-
+c = $e ^ (log(0.1 / 0.9) / window_size); // 10% -> 90% rise time
 
 // ----------------------------------------------------------------------------
 // SAMPLE
@@ -191,7 +191,6 @@ channel_mode == 0 ? // mono left
     );
 );
 
-c = min(1 - 0.001 * (2 - (window_size_ms/1000)), 1);
 rms_total_L      = (1 - c) * sqr(pre_spl0) + c * rms_total_L;
 rms_total_R      = (1 - c) * sqr(pre_spl1) + c * rms_total_R;
 post_rms_total_L = (1 - c) * sqr(spl0)     + c * post_rms_total_L;
@@ -227,13 +226,6 @@ rms_x_L = gfx_w*rms_L;
 rms_x_R = gfx_w*rms_R;
 rms_post_x_L = gfx_w*rms_post_L;
 rms_post_x_R = gfx_w*rms_post_R;
-
-gfx_r = gfx_g = gfx_b = 0.2;
-x = 0;
-loop(dividers,
-    gfx_line(x*gfx_w/dividers,0,x*gfx_w/dividers,gfx_h);
-    x += 1;
-);
 
 top_rms_R = 3*gfx_h/4;
 top_rms_post_R = 2*gfx_h/4;
@@ -278,4 +270,18 @@ font_position ?
   gfx_x = (1-font_separation)*gfx_w;
   gfx_y = 3*gfx_h/4 - font_size/2;
   gfx_drawstr("R");
+);
+
+x = 0;
+gfx_y = gfx_h * 0.5;
+font_size /= 2;
+gfx_setfont(1, "Menlo", font_size, 'b');
+loop(dividers,
+    gfx_r = gfx_g = gfx_b = 0.2;
+    gfx_line(x*gfx_w/dividers,0,x*gfx_w/dividers,gfx_h);
+    gfx_r = gfx_g = gfx_b = 0.8;
+    gfx_x = x * gfx_w/dividers + 0.005 * gfx_w;
+    s = #;
+    gfx_drawstr(sprintf(s, "-%d", 120 - x * 15));
+    x += 1;
 );
