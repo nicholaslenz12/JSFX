@@ -177,37 +177,37 @@ font_separation = 0.05;
 gfx_setfont(1, "Menlo", font_size, 'b');
 
 // calculate right edge of meters
-rms_L      = (max(10 * log10(pwr_L),      floor_db) - floor_db) / -floor_db;
-rms_R      = (max(10 * log10(pwr_R),      floor_db) - floor_db) / -floor_db;
-rms_post_L = (max(10 * log10(pwr_L_byp), floor_db) - floor_db) / -floor_db;
-rms_post_R = (max(10 * log10(pwr_R_byp), floor_db) - floor_db) / -floor_db;
-rms_x_L = gfx_w*rms_L;
-rms_x_R = gfx_w*rms_R;
-rms_post_x_L = gfx_w*rms_post_L;
-rms_post_x_R = gfx_w*rms_post_R;
+pwr_L_norm     = (max(10 * log10(pwr_L),      floor_db) - floor_db) / -floor_db;
+pwr_R_norm     = (max(10 * log10(pwr_R),      floor_db) - floor_db) / -floor_db;
+pwr_L_byp_norm = (max(10 * log10(pwr_L_byp), floor_db) - floor_db) / -floor_db;
+pwr_R_byp_norm = (max(10 * log10(pwr_R_byp), floor_db) - floor_db) / -floor_db;
+rms_x_L = gfx_w*pwr_L_norm;
+rms_x_R = gfx_w*pwr_R_norm;
+rms_post_x_L = gfx_w*pwr_L_byp_norm;
+rms_post_x_R = gfx_w*pwr_R_byp_norm;
 
 // draw right channel meters
-top_rms_R = 3*gfx_h/4;
-top_rms_post_R = 2*gfx_h/4;
+top_pwr_R_norm = 3*gfx_h/4;
+top_pwr_R_byp_norm = 2*gfx_h/4;
 gfx_r = gfx_g = 0;
 gfx_b = 1;
 gfx_x = rms_post_x_R;
 gfx_y = gfx_h;
-gfx_rectto(0,top_rms_R);
+gfx_rectto(0,top_pwr_R_norm);
 gfx_b = 0.5;
-gfx_rectto(rms_x_R,top_rms_post_R);
+gfx_rectto(rms_x_R,top_pwr_R_byp_norm);
 
 // draw channel divider
 gfx_r = gfx_g = gfx_b = 0.2;
-gfx_line(0,top_rms_post_R,gfx_w,top_rms_post_R);
+gfx_line(0,top_pwr_R_byp_norm,gfx_w,top_pwr_R_byp_norm);
 
 // draw left channel meters
-top_rms_L = 1*gfx_h/4;
+top_pwr_L_norm = 1*gfx_h/4;
 gfx_x = 0;
-gfx_y = top_rms_post_R;
+gfx_y = top_pwr_R_byp_norm;
 gfx_r = 1;
 gfx_g = gfx_b = 0;
-gfx_rectto(rms_post_x_L,top_rms_L);
+gfx_rectto(rms_post_x_L,top_pwr_L_norm);
 gfx_r = 0.5;
 gfx_x = 0;
 gfx_rectto(rms_x_L,meter_top);
@@ -219,7 +219,7 @@ font_position ? (
     gfx_y = 0;
     gfx_drawstr("L");
     gfx_x = (1-font_separation)*gfx_w;
-    gfx_y = top_rms_post_R;
+    gfx_y = top_pwr_R_byp_norm;
     gfx_drawstr("R");
 ) : (
     gfx_y = gfx_h/4 - font_size/2;
