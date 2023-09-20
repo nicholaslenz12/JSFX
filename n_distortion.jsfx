@@ -25,7 +25,7 @@ slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
 slider2:2<0,2,1{Left,Right,Stereo}>Channel Mode
 slider3:0<-30,30,0.01>Input Gain (dB)
 slider4:0<-30,30,0.01>Output Gain (dB)
-slider5:300<10,10000,1:log=300>RMS Size (ms)
+slider5:300<10,10000,1:log=300>Response (ms)
 slider7:6<1,10,1>Sections
 
 // ----------------------------------------------------------------------------
@@ -55,10 +55,8 @@ b2 = .0609347197060491;
 b3 = .1086202599228572;
 b4 = .02874707922475963;
 
-
 // Mathematical Functions
-function tanh(x)
-(
+function tanh(x) (
     x >= 0 ? (
         (a1 + (a2 + (a3 + a4 * x) * x) * x) / (b1 + (b2 + (b3 + b4 * x) * x) * x);
     ) : (
@@ -92,7 +90,6 @@ function sine(x) (
     );
 );
 
-t = 0;
 rms_L    = 0;
 rms_R    = 0;
 pre_spl0 = 0;
@@ -108,14 +105,11 @@ mode             = slider1;
 channel_mode     = slider2;
 pre_gain         = 2^(slider3/6);
 post_gain        = 2^(slider4/6);
-window_size      = floor(srate * slider5 / 1000);
-window_size_ms   = slider5;
-dividers         = slider7;
-last_idx         = window_size-2;
-start_post_rms_L = 2*window_size;
-start_post_rms_R = 3*window_size;
+response_samples = floor(srate * slider5 / 1000);
+ndividers        = slider7;
 
-c = $e ^ (log(0.1 / 0.9) / window_size); // 10% -> 90% rise time
+c  = $e ^ (log(0.1 / 0.9) / response_samples); // 10% -> 90% rise time
+c_ = 1-c;
 
 // ----------------------------------------------------------------------------
 // SAMPLE
@@ -125,52 +119,49 @@ c = $e ^ (log(0.1 / 0.9) / window_size); // 10% -> 90% rise time
 channel_mode == 0 ? ( // mono left
     pre_spl0 = pre_spl1 = spl0;
     mode == 0 ? (
-        spl0 = post_gain*tanh(pre_gain*pre_spl0);
+        spl0 = post_gain *   tanh(pre_gain * pre_spl0);
     ) : mode == 1 ? (
-        spl0 = post_gain*arctan(pre_gain*pre_spl0);
+        spl0 = post_gain * arctan(pre_gain * pre_spl0);
     ) : mode == 2 ? (
-        spl0 = post_gain*cubic(pre_gain*pre_spl0);
+        spl0 = post_gain *  cubic(pre_gain * pre_spl0);
     ) : mode == 3 ? (
-        spl0 = post_gain*sine(pre_gain*pre_spl0);
+        spl0 = post_gain *   sine(pre_gain * pre_spl0);
     );
     spl1 = spl0;
 ) : channel_mode == 1 ? ( // mono right
     pre_spl0 = pre_spl1 = spl1;
     mode == 0 ? (
-        spl1 = post_gain*tanh(pre_gain*pre_spl1);
+        spl1 = post_gain *   tanh(pre_gain * pre_spl1);
     ) : mode == 1 ? (
-        spl1 = post_gain*arctan(pre_gain*pre_spl1);
+        spl1 = post_gain * arctan(pre_gain * pre_spl1);
     ) : mode == 2 ? (
-        spl1 = post_gain*cubic(pre_gain*pre_spl1);
+        spl1 = post_gain *  cubic(pre_gain * pre_spl1);
     ) : mode == 3 ? (
-        spl1 = post_gain*sine(pre_gain*pre_spl1);
+        spl1 = post_gain *   sine(pre_gain * pre_spl1);
     );
     spl0 = spl1;
 ) : channel_mode == 2 ? ( // stereo
     pre_spl0 = spl0;
     pre_spl1 = spl1;
     mode == 0 ? (
-        spl0 = post_gain*tanh(pre_gain*pre_spl0);
-        spl1 = post_gain*tanh(pre_gain*pre_spl1);
+        spl0 = post_gain *   tanh(pre_gain * pre_spl0);
+        spl1 = post_gain *   tanh(pre_gain * pre_spl1);
     ) : mode == 1 ? (
-        spl0 = post_gain*arctan(pre_gain*pre_spl0);
-        spl1 = post_gain*arctan(pre_gain*pre_spl1);
+        spl0 = post_gain * arctan(pre_gain * pre_spl0);
+        spl1 = post_gain * arctan(pre_gain * pre_spl1);
     ) : mode == 2 ? (
-        spl0 = post_gain*cubic(pre_gain*pre_spl0);
-        spl1 = post_gain*cubic(pre_gain*pre_spl1);
+        spl0 = post_gain *  cubic(pre_gain * pre_spl0);
+        spl1 = post_gain *  cubic(pre_gain * pre_spl1);
     ) : mode == 3 ? (
-        spl0 = post_gain*sine(pre_gain*pre_spl0);
-        spl1 = post_gain*sine(pre_gain*pre_spl1);
+        spl0 = post_gain *   sine(pre_gain * pre_spl0);
+        spl1 = post_gain *   sine(pre_gain * pre_spl1);
     );
 );
 
-rms_total_L      = (1 - c) * sqr(pre_spl0) + c * rms_total_L;
-rms_total_R      = (1 - c) * sqr(pre_spl1) + c * rms_total_R;
-post_rms_total_L = (1 - c) * sqr(spl0)     + c * post_rms_total_L;
-post_rms_total_R = (1 - c) * sqr(spl1)     + c * post_rms_total_R;
-
-
-t > last_idx ? t = 0 : t += 1;
+rms_total_L      = c_ * sqr(pre_spl0) + c * rms_total_L;
+rms_total_R      = c_ * sqr(pre_spl1) + c * rms_total_R;
+post_rms_total_L = c_ * sqr(spl0)     + c * post_rms_total_L;
+post_rms_total_R = c_ * sqr(spl1)     + c * post_rms_total_R;
 
 // ----------------------------------------------------------------------------
 // GRAPHICS
@@ -179,6 +170,7 @@ t > last_idx ? t = 0 : t += 1;
 
 font_separation = 0.05;
 
+// set up parameters for drawing "L" and "R" for channels
 2*gfx_h/5 > font_separation*gfx_w ? (
     font_position = 0;
     font_size = font_separation*gfx_w;
@@ -188,6 +180,7 @@ font_separation = 0.05;
 );
 gfx_setfont(1, "Menlo", font_size, 'b');
 
+// calculate right edge of meters
 rms_L      = (max(10 * log10(rms_total_L), floor_db) - floor_db) / -floor_db;
 rms_R      = (max(10 * log10(rms_total_R), floor_db) - floor_db) / -floor_db;
 rms_post_L = (max(10 * log10(post_rms_total_L), floor_db) - floor_db) / -floor_db;
@@ -243,12 +236,12 @@ x = 0;
 gfx_y = gfx_h * 0.5;
 font_size /= 2;
 gfx_setfont(1, "Menlo", font_size, 'b');
-loop(dividers,
+loop(ndividers,
     gfx_r = gfx_g = gfx_b = 0.2;
-    gfx_line(x*gfx_w/dividers,0,x*gfx_w/dividers,gfx_h);
+    gfx_line(x*gfx_w/ndividers,0,x*gfx_w/ndividers,gfx_h);
     gfx_r = gfx_g = gfx_b = 0.8;
-    gfx_x = x * gfx_w/dividers + 0.005 * gfx_w;
+    gfx_x = x * gfx_w/ndividers + 0.005 * gfx_w;
     s = #;
-    gfx_drawstr(sprintf(s, "-%d", -floor_db - x * (-floor_db / dividers)));
+    gfx_drawstr(sprintf(s, "-%d", -floor_db - x * (-floor_db / ndividers)));
     x += 1;
 );
