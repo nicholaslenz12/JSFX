@@ -181,30 +181,30 @@ pwr_L_norm     = (max(10 * log10(pwr_L),      floor_db) - floor_db) / -floor_db;
 pwr_R_norm     = (max(10 * log10(pwr_R),      floor_db) - floor_db) / -floor_db;
 pwr_L_byp_norm = (max(10 * log10(pwr_L_byp), floor_db) - floor_db) / -floor_db;
 pwr_R_byp_norm = (max(10 * log10(pwr_R_byp), floor_db) - floor_db) / -floor_db;
-pwr_L_x = gfx_w*pwr_L_norm;
-pwr_R_x = gfx_w*pwr_R_norm;
-pwr_L_byp_x = gfx_w*pwr_L_byp_norm;
-pwr_R_byp_x = gfx_w*pwr_R_byp_norm;
+pwr_L_x        = gfx_w * pwr_L_norm;
+pwr_R_x        = gfx_w * pwr_R_norm;
+pwr_L_byp_x    = gfx_w * pwr_L_byp_norm;
+pwr_R_byp_x    = gfx_w * pwr_R_byp_norm;
 
 // draw right channel meters
-top_pwr_R_norm = 3*gfx_h/4;
-top_pwr_R_byp_norm = 2*gfx_h/4;
+pwr_R_y = 3*gfx_h/4;
+pwr_R_byp_y = 2*gfx_h/4;
 gfx_r = gfx_g = 0;
 gfx_b = 1;
 gfx_x = pwr_R_byp_x;
 gfx_y = gfx_h;
-gfx_rectto(0,top_pwr_R_norm);
+gfx_rectto(0,pwr_R_y);
 gfx_b = 0.5;
-gfx_rectto(pwr_R_x,top_pwr_R_byp_norm);
+gfx_rectto(pwr_R_x,pwr_R_byp_y);
 
 // draw channel divider
 gfx_r = gfx_g = gfx_b = 0.2;
-gfx_line(0,top_pwr_R_byp_norm,gfx_w,top_pwr_R_byp_norm);
+gfx_line(0,pwr_R_byp_y,gfx_w,pwr_R_byp_y);
 
 // draw left channel meters
 top_pwr_L_norm = 1*gfx_h/4;
 gfx_x = 0;
-gfx_y = top_pwr_R_byp_norm;
+gfx_y = pwr_R_byp_y;
 gfx_r = 1;
 gfx_g = gfx_b = 0;
 gfx_rectto(pwr_L_byp_x,top_pwr_L_norm);
@@ -219,7 +219,7 @@ font_position ? (
     gfx_y = 0;
     gfx_drawstr("L");
     gfx_x = (1-font_separation)*gfx_w;
-    gfx_y = top_pwr_R_byp_norm;
+    gfx_y = pwr_R_byp_y;
     gfx_drawstr("R");
 ) : (
     gfx_y = gfx_h/4 - font_size/2;
