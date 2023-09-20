@@ -59,55 +59,42 @@ b4 = .02874707922475963;
 // Mathematical Functions
 function tanh(x)
 (
-  //2/(1+7.389^(-x))-1;
-  x >= 0 ?
-  (
-  (a1 + (a2 + (a3 + a4 * x) * x) * x) / (b1 + (b2 + (b3 + b4 * x) * x) * x);
-  ) :
-  (
-  -(a1 + (a2 + (a3 + a4 * -x) * -x) * -x) / (b1 + (b2 + (b3 + b4 * -x) * -x) * -x);
-  );
+    x >= 0 ? (
+        (a1 + (a2 + (a3 + a4 * x) * x) * x) / (b1 + (b2 + (b3 + b4 * x) * x) * x);
+    ) : (
+        -(a1 + (a2 + (a3 + a4 * -x) * -x) * -x) / (b1 + (b2 + (b3 + b4 * -x) * -x) * -x);
+    );
 );
 
-function arctan(x)
-( 
-  x >= 0 ?
-  (
-  quarterpi * x + 0.273 * x * (1 - x);
-  ) :
-  (
-  quarterpi * x + 0.273 * x * (1 + x);
-  );
+function arctan(x) ( 
+    x >= 0 ? (
+        quarterpi * x + 0.273 * x * (1 - x);
+    ) : (
+        quarterpi * x + 0.273 * x * (1 + x);
+    );
 );
 
-function cubic(x)
-(
+function cubic(x) (
   abs(x) <= 1 ? x - x*x*x/3 : sign(x)*2/3;
 );
 
-function sine(x)
-(
-  xscaled = halfpi * x;
-  abs(x) > 1 ?
-  (
-  sign(x) / halfpi;
-  ) :
-  (
-  x >= 0 ?
-  (
-  16 * xscaled * ($pi - xscaled) / (5 * pisquared - 4 * xscaled * ($pi - xscaled)) / halfpi;
-  ) :
-  (
-  xscaled *= -1;
-  -16 * xscaled * ($pi - xscaled) / (5 * pisquared - 4 * xscaled * ($pi - xscaled)) / halfpi;
-  );
-  );
-  
+function sine(x) (
+    xscaled = halfpi * x;
+    abs(x) > 1 ? (
+        sign(x) / halfpi;
+    ) : (
+        x >= 0 ? (
+            16 * xscaled * ($pi - xscaled) / (5 * pisquared - 4 * xscaled * ($pi - xscaled)) / halfpi;
+        ) : (
+            xscaled *= -1;
+            -16 * xscaled * ($pi - xscaled) / (5 * pisquared - 4 * xscaled * ($pi - xscaled)) / halfpi;
+        );
+    );
 );
 
 t = 0;
-rms_L= 0;
-rms_R= 0;
+rms_L    = 0;
+rms_R    = 0;
 pre_spl0 = 0;
 pre_spl1 = 0;
 
@@ -135,58 +122,43 @@ c = $e ^ (log(0.1 / 0.9) / window_size); // 10% -> 90% rise time
 // ----------------------------------------------------------------------------
 @sample
 
-channel_mode == 0 ? // mono left
-(
+channel_mode == 0 ? ( // mono left
     pre_spl0 = pre_spl1 = spl0;
-    mode == 0 ?
-    (
+    mode == 0 ? (
         spl0 = post_gain*tanh(pre_gain*pre_spl0);
-    ) : mode == 1 ?
-    (
+    ) : mode == 1 ? (
         spl0 = post_gain*arctan(pre_gain*pre_spl0);
-    ) : mode == 2 ?
-    (
+    ) : mode == 2 ? (
         spl0 = post_gain*cubic(pre_gain*pre_spl0);
-    ) : mode == 3 ?
-    (
+    ) : mode == 3 ? (
         spl0 = post_gain*sine(pre_gain*pre_spl0);
     );
     spl1 = spl0;
-) : channel_mode == 1 ? // mono right
-(
+) : channel_mode == 1 ? ( // mono right
     pre_spl0 = pre_spl1 = spl1;
-    mode == 0 ?
-    (
+    mode == 0 ? (
         spl1 = post_gain*tanh(pre_gain*pre_spl1);
-    ) : mode == 1 ?
-    (
+    ) : mode == 1 ? (
         spl1 = post_gain*arctan(pre_gain*pre_spl1);
-    ) : mode == 2 ?
-    (
+    ) : mode == 2 ? (
         spl1 = post_gain*cubic(pre_gain*pre_spl1);
-    ) : mode == 3 ?
-    (
+    ) : mode == 3 ? (
         spl1 = post_gain*sine(pre_gain*pre_spl1);
     );
     spl0 = spl1;
-) : channel_mode == 2 ? // stereo
-(
+) : channel_mode == 2 ? ( // stereo
     pre_spl0 = spl0;
     pre_spl1 = spl1;
-    mode == 0 ?
-    (
+    mode == 0 ? (
         spl0 = post_gain*tanh(pre_gain*pre_spl0);
         spl1 = post_gain*tanh(pre_gain*pre_spl1);
-    ) : mode == 1 ?
-    (
+    ) : mode == 1 ? (
         spl0 = post_gain*arctan(pre_gain*pre_spl0);
         spl1 = post_gain*arctan(pre_gain*pre_spl1);
-    ) : mode == 2 ?
-    (
+    ) : mode == 2 ? (
         spl0 = post_gain*cubic(pre_gain*pre_spl0);
         spl1 = post_gain*cubic(pre_gain*pre_spl1);
-    ) : mode == 3 ?
-    (
+    ) : mode == 3 ? (
         spl0 = post_gain*sine(pre_gain*pre_spl0);
         spl1 = post_gain*sine(pre_gain*pre_spl1);
     );
@@ -207,15 +179,12 @@ t > last_idx ? t = 0 : t += 1;
 
 font_separation = 0.05;
 
-2*gfx_h/5 > font_separation*gfx_w ?
-(
-font_position = 0;
-font_size = font_separation*gfx_w;
-)
-:
-(
-font_position = 1;
-font_size = 2*gfx_h/5;
+2*gfx_h/5 > font_separation*gfx_w ? (
+    font_position = 0;
+    font_size = font_separation*gfx_w;
+) : (
+    font_position = 1;
+    font_size = 2*gfx_h/5;
 );
 gfx_setfont(1, "Menlo", font_size, 'b');
 
@@ -257,17 +226,17 @@ gfx_r = gfx_g = gfx_b = 1;
 
 gfx_x = (1-font_separation)*gfx_w;
 font_position ? (
-  gfx_y = 0;
-  gfx_drawstr("L");
-  gfx_x = (1-font_separation)*gfx_w;
-  gfx_y = top_rms_post_R;
-  gfx_drawstr("R");
+    gfx_y = 0;
+    gfx_drawstr("L");
+    gfx_x = (1-font_separation)*gfx_w;
+    gfx_y = top_rms_post_R;
+    gfx_drawstr("R");
 ) : (
-  gfx_y = gfx_h/4 - font_size/2;
-  gfx_drawstr("L");
-  gfx_x = (1-font_separation)*gfx_w;
-  gfx_y = 3*gfx_h/4 - font_size/2;
-  gfx_drawstr("R");
+    gfx_y = gfx_h/4 - font_size/2;
+    gfx_drawstr("L");
+    gfx_x = (1-font_separation)*gfx_w;
+    gfx_y = 3*gfx_h/4 - font_size/2;
+    gfx_drawstr("R");
 );
 
 x = 0;
