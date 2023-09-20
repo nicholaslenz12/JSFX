@@ -214,18 +214,18 @@ gfx_rectto(pwr_L_x, 0);
 
 // draw "L" "R" channel indicators
 gfx_r = gfx_g = gfx_b = 1;
-gfx_x = (1-font_separation)*gfx_w;
+gfx_x = (1-font_separation) * gfx_w;
 font_position ? (
     gfx_y = 0;
     gfx_drawstr("L");
-    gfx_x = (1-font_separation)*gfx_w;
+    gfx_x = (1-font_separation) * gfx_w;
     gfx_y = pwr_R_byp_y;
     gfx_drawstr("R");
 ) : (
-    gfx_y = gfx_h/4 - font_size/2;
+    gfx_y = gfx_h / 4 - font_size / 2;
     gfx_drawstr("L");
-    gfx_x = (1-font_separation)*gfx_w;
-    gfx_y = 3*gfx_h/4 - font_size/2;
+    gfx_x = (1-font_separation) * gfx_w;
+    gfx_y = 3*gfx_h / 4 - font_size / 2;
     gfx_drawstr("R");
 );
 
