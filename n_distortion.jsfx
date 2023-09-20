@@ -154,10 +154,10 @@ channel_mode == 0 ? ( // mono left
     );
 );
 
-rms_total_L      = c_ * sqr(pre_spl0) + c * rms_total_L;
-rms_total_R      = c_ * sqr(pre_spl1) + c * rms_total_R;
-post_rms_total_L = c_ * sqr(spl0)     + c * post_rms_total_L;
-post_rms_total_R = c_ * sqr(spl1)     + c * post_rms_total_R;
+pwr_L     = c_ * sqr(pre_spl0) + c * pwr_L;
+pwr_R     = c_ * sqr(pre_spl1) + c * pwr_R;
+pwr_L_byp = c_ * sqr(spl0)     + c * pwr_L_byp;
+pwr_R_byp = c_ * sqr(spl1)     + c * pwr_R_byp;
 
 // ----------------------------------------------------------------------------
 // GRAPHICS
@@ -177,10 +177,10 @@ font_separation = 0.05;
 gfx_setfont(1, "Menlo", font_size, 'b');
 
 // calculate right edge of meters
-rms_L      = (max(10 * log10(rms_total_L),      floor_db) - floor_db) / -floor_db;
-rms_R      = (max(10 * log10(rms_total_R),      floor_db) - floor_db) / -floor_db;
-rms_post_L = (max(10 * log10(post_rms_total_L), floor_db) - floor_db) / -floor_db;
-rms_post_R = (max(10 * log10(post_rms_total_R), floor_db) - floor_db) / -floor_db;
+rms_L      = (max(10 * log10(pwr_L),      floor_db) - floor_db) / -floor_db;
+rms_R      = (max(10 * log10(pwr_R),      floor_db) - floor_db) / -floor_db;
+rms_post_L = (max(10 * log10(pwr_L_byp), floor_db) - floor_db) / -floor_db;
+rms_post_R = (max(10 * log10(pwr_R_byp), floor_db) - floor_db) / -floor_db;
 rms_x_L = gfx_w*rms_L;
 rms_x_R = gfx_w*rms_R;
 rms_post_x_L = gfx_w*rms_post_L;
