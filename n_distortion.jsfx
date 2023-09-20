@@ -25,8 +25,8 @@ slider1:0<0,3,1{Tanh,Arctan,Cubic,Sine}>Distortion Type
 slider2:2<0,2,1{Left,Right,Stereo}>Channel Mode
 slider3:0<-30,30,0.01>Input Gain (dB)
 slider4:0<-30,30,0.01>Output Gain (dB)
-slider5:300<10,1000,1:log=300>RMS Size (ms)
-slider7:16<1,32,1>Sections
+slider5:300<10,10000,1:log=300>RMS Size (ms)
+slider7:6<1,10,1>Sections
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -127,6 +127,7 @@ dividers         = slider7;
 last_idx         = window_size-2;
 start_post_rms_L = 2*window_size;
 start_post_rms_R = 3*window_size;
+
 c = $e ^ (log(0.1 / 0.9) / window_size); // 10% -> 90% rise time
 
 // ----------------------------------------------------------------------------
@@ -202,7 +203,7 @@ t > last_idx ? t = 0 : t += 1;
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
-@gfx 400 100
+@gfx 400 80
 
 font_separation = 0.05;
 
@@ -218,10 +219,10 @@ font_size = 2*gfx_h/5;
 );
 gfx_setfont(1, "Menlo", font_size, 'b');
 
-rms_L      = (max(5 * log(rms_total_L), floor_db) - floor_db) / -floor_db;
-rms_R      = (max(5 * log(rms_total_R), floor_db) - floor_db) / -floor_db;
-rms_post_L = (max(5 * log(post_rms_total_L), floor_db) - floor_db) / -floor_db;
-rms_post_R = (max(5 * log(post_rms_total_R), floor_db) - floor_db) / -floor_db;
+rms_L      = (max(10 * log10(rms_total_L), floor_db) - floor_db) / -floor_db;
+rms_R      = (max(10 * log10(rms_total_R), floor_db) - floor_db) / -floor_db;
+rms_post_L = (max(10 * log10(post_rms_total_L), floor_db) - floor_db) / -floor_db;
+rms_post_R = (max(10 * log10(post_rms_total_R), floor_db) - floor_db) / -floor_db;
 rms_x_L = gfx_w*rms_L;
 rms_x_R = gfx_w*rms_R;
 rms_post_x_L = gfx_w*rms_post_L;
@@ -255,16 +256,13 @@ gfx_rectto(rms_post_x_L,meter_top);
 gfx_r = gfx_g = gfx_b = 1;
 
 gfx_x = (1-font_separation)*gfx_w;
-font_position ?
-(
+font_position ? (
   gfx_y = 0;
   gfx_drawstr("L");
   gfx_x = (1-font_separation)*gfx_w;
   gfx_y = top_rms_post_R;
   gfx_drawstr("R");
-)
-:
-(
+) : (
   gfx_y = gfx_h/4 - font_size/2;
   gfx_drawstr("L");
   gfx_x = (1-font_separation)*gfx_w;
@@ -282,6 +280,6 @@ loop(dividers,
     gfx_r = gfx_g = gfx_b = 0.8;
     gfx_x = x * gfx_w/dividers + 0.005 * gfx_w;
     s = #;
-    gfx_drawstr(sprintf(s, "-%d", 120 - x * 15));
+    gfx_drawstr(sprintf(s, "-%d", -floor_db - x * (-floor_db / dividers)));
     x += 1;
 );
