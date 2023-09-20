@@ -1,20 +1,20 @@
- /*
- Nicholas Lenz
- Github : nicholaslenz12@gmail.com
- Distorts a signal based on 4 non-linear functions.
- audio from 2-channels can first be converted to 1-channel before processing,
- or the processing can be applied to both channels.
+/*
+    Nicholas Lenz
+    Github : nicholaslenz12@gmail.com
+    Distorts a signal based on 4 non-linear functions.
+    audio from 2-channels can first be converted to 1-channel before processing,
+    or the processing can be applied to both channels.
 
- The types of distortion are:
- Tanh
- Arctan
- Cubic (x^3) (potential for higher-order, odd poly's later)
- Sine
+    The types of distortion are:
+    Tanh
+    Arctan
+    Cubic (x^3) (potential for higher-order, odd poly's later)
+    Sine
 
- Needs help:
- - Needs sample-accurate automation.
- - Needs some creativity.
- */
+    Needs help:
+    - Needs sample-accurate automation.
+    - Needs some creativity.
+*/
 
 desc:N-Distortion
 
@@ -45,6 +45,7 @@ halfpi = 2*atan(1);
 quarterpi = halfpi / 2;
 pisquared = $pi * $pi;
 
+// tanh approximation
 a1 = -.0000067436811832;
 a2 = .2468149110712040;
 a3 = .0583691066395175;
@@ -89,11 +90,6 @@ function sine(x) (
         );
     );
 );
-
-rms_L    = 0;
-rms_R    = 0;
-pre_spl0 = 0;
-pre_spl1 = 0;
 
 floor_db = -120;
 
@@ -181,8 +177,8 @@ font_separation = 0.05;
 gfx_setfont(1, "Menlo", font_size, 'b');
 
 // calculate right edge of meters
-rms_L      = (max(10 * log10(rms_total_L), floor_db) - floor_db) / -floor_db;
-rms_R      = (max(10 * log10(rms_total_R), floor_db) - floor_db) / -floor_db;
+rms_L      = (max(10 * log10(rms_total_L),      floor_db) - floor_db) / -floor_db;
+rms_R      = (max(10 * log10(rms_total_R),      floor_db) - floor_db) / -floor_db;
 rms_post_L = (max(10 * log10(post_rms_total_L), floor_db) - floor_db) / -floor_db;
 rms_post_R = (max(10 * log10(post_rms_total_R), floor_db) - floor_db) / -floor_db;
 rms_x_L = gfx_w*rms_L;
@@ -190,10 +186,9 @@ rms_x_R = gfx_w*rms_R;
 rms_post_x_L = gfx_w*rms_post_L;
 rms_post_x_R = gfx_w*rms_post_R;
 
+// draw right channel meters
 top_rms_R = 3*gfx_h/4;
 top_rms_post_R = 2*gfx_h/4;
-top_rms_L = 1*gfx_h/4;
-
 gfx_r = gfx_g = 0;
 gfx_b = 1;
 gfx_x = rms_x_R;
@@ -202,12 +197,14 @@ gfx_rectto(0,top_rms_R);
 gfx_b = 0.5;
 gfx_rectto(rms_post_x_R,top_rms_post_R);
 
+// draw channel divider
 gfx_r = gfx_g = gfx_b = 0.2;
 gfx_line(0,top_rms_post_R,gfx_w,top_rms_post_R);
 
+// draw left channel meters
+top_rms_L = 1*gfx_h/4;
 gfx_x = 0;
 gfx_y = top_rms_post_R;
-
 gfx_r = 1;
 gfx_g = gfx_b = 0;
 gfx_rectto(rms_x_L,top_rms_L);
@@ -215,8 +212,8 @@ gfx_r = 0.5;
 gfx_x = 0;
 gfx_rectto(rms_post_x_L,meter_top);
 
+// draw "L" "R" channel indicators
 gfx_r = gfx_g = gfx_b = 1;
-
 gfx_x = (1-font_separation)*gfx_w;
 font_position ? (
     gfx_y = 0;
@@ -232,16 +229,19 @@ font_position ? (
     gfx_drawstr("R");
 );
 
+// draw dB lines and annotations
 x = 0;
 gfx_y = gfx_h * 0.5;
 font_size /= 2;
 gfx_setfont(1, "Menlo", font_size, 'b');
-loop(ndividers,
-    gfx_r = gfx_g = gfx_b = 0.2;
-    gfx_line(x*gfx_w/ndividers,0,x*gfx_w/ndividers,gfx_h);
-    gfx_r = gfx_g = gfx_b = 0.8;
-    gfx_x = x * gfx_w/ndividers + 0.005 * gfx_w;
-    s = #;
-    gfx_drawstr(sprintf(s, "-%d", -floor_db - x * (-floor_db / ndividers)));
-    x += 1;
+ndividers > 1 ? (
+    loop(ndividers,
+        gfx_r = gfx_g = gfx_b = 0.2;
+        gfx_line(x * gfx_w / ndividers, 0, x * gfx_w / ndividers,gfx_h);
+        gfx_r = gfx_g = gfx_b = 0.8;
+        gfx_x = x * gfx_w / ndividers + 0.005 * gfx_w;
+        s = #;
+        gfx_drawstr(sprintf(s, "-%d", -floor_db - x * (-floor_db / ndividers)));
+        x += 1;
+    );
 );
