@@ -91,7 +91,8 @@ function sine(x) (
     );
 );
 
-floor_db = -120;
+floor_db  = -120;
+gain_comp = 1 / 2^(slider3/6);
 
 // ----------------------------------------------------------------------------
 // SLIDER
@@ -100,6 +101,7 @@ floor_db = -120;
 mode             = slider1;
 channel_mode     = slider2;
 pre_gain         = 2^(slider3/6);
+// gain_comp        = 1 / pre_gain;
 post_gain        = 2^(slider4/6);
 response_samples = floor(srate * slider5 / 1000);
 ndividers        = slider7;
@@ -115,49 +117,54 @@ c_ = 1-c;
 channel_mode == 0 ? ( // mono left
     pre_spl0 = pre_spl1 = spl0;
     mode == 0 ? (
-        spl0 = post_gain *   tanh(pre_gain * pre_spl0);
+        spl0 = gain_comp *   tanh(pre_gain * pre_spl0);
     ) : mode == 1 ? (
-        spl0 = post_gain * arctan(pre_gain * pre_spl0);
+        spl0 = gain_comp * arctan(pre_gain * pre_spl0);
     ) : mode == 2 ? (
-        spl0 = post_gain *  cubic(pre_gain * pre_spl0);
+        spl0 = gain_comp *  cubic(pre_gain * pre_spl0);
     ) : mode == 3 ? (
-        spl0 = post_gain *   sine(pre_gain * pre_spl0);
+        spl0 = gain_comp *   sine(pre_gain * pre_spl0);
     );
     spl1 = spl0;
 ) : channel_mode == 1 ? ( // mono right
     pre_spl0 = pre_spl1 = spl1;
     mode == 0 ? (
-        spl1 = post_gain *   tanh(pre_gain * pre_spl1);
+        spl1 = gain_comp *   tanh(pre_gain * pre_spl1);
     ) : mode == 1 ? (
-        spl1 = post_gain * arctan(pre_gain * pre_spl1);
+        spl1 = gain_comp * arctan(pre_gain * pre_spl1);
     ) : mode == 2 ? (
-        spl1 = post_gain *  cubic(pre_gain * pre_spl1);
+        spl1 = gain_comp *  cubic(pre_gain * pre_spl1);
     ) : mode == 3 ? (
-        spl1 = post_gain *   sine(pre_gain * pre_spl1);
+        spl1 = gain_comp *   sine(pre_gain * pre_spl1);
     );
     spl0 = spl1;
 ) : channel_mode == 2 ? ( // stereo
     pre_spl0 = spl0;
     pre_spl1 = spl1;
     mode == 0 ? (
-        spl0 = post_gain *   tanh(pre_gain * pre_spl0);
-        spl1 = post_gain *   tanh(pre_gain * pre_spl1);
+        spl0 = gain_comp *   tanh(pre_gain * pre_spl0);
+        spl1 = gain_comp *   tanh(pre_gain * pre_spl1);
     ) : mode == 1 ? (
-        spl0 = post_gain * arctan(pre_gain * pre_spl0);
-        spl1 = post_gain * arctan(pre_gain * pre_spl1);
+        spl0 = gain_comp * arctan(pre_gain * pre_spl0);
+        spl1 = gain_comp * arctan(pre_gain * pre_spl1);
     ) : mode == 2 ? (
-        spl0 = post_gain *  cubic(pre_gain * pre_spl0);
-        spl1 = post_gain *  cubic(pre_gain * pre_spl1);
+        spl0 = gain_comp *  cubic(pre_gain * pre_spl0);
+        spl1 = gain_comp *  cubic(pre_gain * pre_spl1);
     ) : mode == 3 ? (
-        spl0 = post_gain *   sine(pre_gain * pre_spl0);
-        spl1 = post_gain *   sine(pre_gain * pre_spl1);
+        spl0 = gain_comp *   sine(pre_gain * pre_spl0);
+        spl1 = gain_comp *   sine(pre_gain * pre_spl1);
     );
-);
+); 
 
 pwr_L     = c_ * sqr(pre_spl0) + c * pwr_L;
 pwr_R     = c_ * sqr(pre_spl1) + c * pwr_R;
 pwr_L_byp = c_ * sqr(spl0)     + c * pwr_L_byp;
 pwr_R_byp = c_ * sqr(spl1)     + c * pwr_R_byp;
+
+pwr_diff = pwr_L - pwr_L_byp; // should do this in log
+gain_comp += 0.0001 * (pwr_L - pwr_L_byp);
+spl0 *= post_gain;
+spl1 *= post_gain;
 
 // ----------------------------------------------------------------------------
 // GRAPHICS
