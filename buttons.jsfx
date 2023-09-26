@@ -7,20 +7,20 @@ import colors.jsfx
 // - RGB color object parameter
 
 @init
-// If this is not linked to a slider, you can pass 0 for slider_idx
+// If this is not detected to a slider, you can pass 0 for slider_idx
 function button_create(x, y, r, min_val, max_val, init_val, colors, slider_idx) (
     this.x = x;
     this.y = y;
     this.r = r;
 
-    // button_update
+    // button_detect_drag
     this.min_val = min_val;
     this.max_val = max_val;
     this.init_val = init_val;
     this.val = init_val; // button keeps track of state? Or should this be elsewhere?
     this.mouse_held = 0;
 
-    // button_reset
+    // button_detect_reset
     this.clicked_time = 0;
     this.unclicked = 0;
     this.reset_time = 0;
@@ -56,7 +56,7 @@ function button_draw() instance(val) (
 
 // It's up to external code to change the slider state
 // (or add a function that updates the slider state?)
-function button_update() instance(val) (
+function button_detect_drag() instance(val) (
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
@@ -80,7 +80,7 @@ function button_update() instance(val) (
     );
 );
 
-function button_reset() instance(val) (
+function button_detect_reset() instance(val) (
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
@@ -120,7 +120,13 @@ function button_reset() instance(val) (
 );
 
 function button_update_slider() instance(slider_idx) (
-    sliderchange(2 ^ slider_idx);
-    slider_automate(2 ^ slider_idx);
-    slider(slider_idx) = this.val;
+    slider(slider_idx) != this.val ? (
+        // sliderchange(2 ^ (slider_idx-1)); // while having this active cause weird feedback?
+        slider_automate(2 ^ (slider_idx-1));
+        slider(slider_idx) = this.val;
+    );
+);
+
+function button_detect_slider() instance(slider_idx) (
+    this.val = slider(slider_idx);
 );
