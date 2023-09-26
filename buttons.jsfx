@@ -7,7 +7,8 @@ import colors.jsfx
 // - RGB color object parameter
 
 @init
-function button_create(x, y, r, min_val, max_val, init_val, colors) (
+// If this is not linked to a slider, you can pass 0 for slider_idx
+function button_create(x, y, r, min_val, max_val, init_val, colors, slider_idx) (
     this.x = x;
     this.y = y;
     this.r = r;
@@ -26,6 +27,7 @@ function button_create(x, y, r, min_val, max_val, init_val, colors) (
     this.reset = 0;
 
     this.colors = colors;
+    this.slider_idx = slider_idx;
 );
 
 function button_draw() instance(val) (
@@ -60,7 +62,7 @@ function button_update() instance(val) (
     r = min(gfx_w * this.r, gfx_h * this.r);
 
     in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
-    mouse_cap == 1 && !this.mouse_held && in_range ? (
+    mouse_cap == 1 && !this.mouse_held && in_range && !this.reset ? (
         this.mouse_held = 1;
         hold_x = mouse_x;
         hold_y = mouse_y;
@@ -70,7 +72,7 @@ function button_update() instance(val) (
         this.mouse_held = 0;
     );
     
-    this.mouse_held ? (
+    this.mouse_held && !this.reset ? (
         delta = (hold_y - mouse_y);
         val    = delta + val_;
         val = min(val, this.max_val);
@@ -117,7 +119,7 @@ function button_reset() instance(val) (
     );
 );
 
-function button_update_slider(slider_idx) (
+function button_update_slider() instance(slider_idx) (
     sliderchange(2 ^ slider_idx);
     slider_automate(2 ^ slider_idx);
     slider(slider_idx) = this.val;
