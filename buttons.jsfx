@@ -30,7 +30,9 @@ function button_create(x, y, r, min_val, max_val, init_val, colors, slider_idx) 
     this.slider_idx = slider_idx;
 );
 
-function button_draw(format) instance(val) (
+// Add "" for label to have no label
+// label is used when the button is static
+function button_draw(format, label) instance(val) (
     antialias = 1;
     x = gfx_w * this.x;
     y = gfx_h * this.y;
@@ -43,14 +45,21 @@ function button_draw(format) instance(val) (
     gfx_rect(x-r, y-r, 2*r, 2*r*(1 - norm));
     white();
     gfx_circle(x, y, r, 0, antialias);
-    #s = "";
-    sprintf(#s, format, val);
     a = 1;
     b = 2;
-    gfx_measurestr(#s, a, b);
-    gfx_x = x - a/2;
-    gfx_y = y - b/2;
-    gfx_printf(format, val);
+    (strlen(label) > 0) && (!this.mouse_held) ? ( // draw label
+        gfx_measurestr(label, a, b);
+        gfx_x = x - a/2;
+        gfx_y = y - b/2;
+        gfx_printf("%s", label);
+    ) : ( // draw parameter value
+        #s = "";
+        sprintf(#s, format, val);
+        gfx_measurestr(#s, a, b);
+        gfx_x = x - a/2;
+        gfx_y = y - b/2;
+        gfx_printf(format, val);
+    );
 );
 
 // It's up to external code to change the slider state
