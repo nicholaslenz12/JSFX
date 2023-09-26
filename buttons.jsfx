@@ -85,7 +85,6 @@ function button_reset() instance(val) (
     
     in_range ? (
         // starts the clock awaiting second click
-        x____ += 1;
         mouse_cap && this.clicked_time == 0 && this.reset_time == 0 ? (
             this.clicked_time = 15;
             this.unclicked = 0;
