@@ -1,6 +1,7 @@
 desc:Buttons
 
 import colors.jsfx
+import fonts.jsfx
 
 // TODO:
 // - Make reset times independent of framerate
@@ -26,7 +27,6 @@ function button_create(x, y, r, min_val, max_val, init_val, slider_idx) (
     this.reset_time = 0;
     this.reset = 0;
 
-    this.colors = colors;
     this.slider_idx = slider_idx;
 );
 
@@ -37,6 +37,7 @@ function button_draw(format, label) instance(val) (
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
+    this.font.set_from_font();
     
     this.colors.set_from_colors();
     in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
