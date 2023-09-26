@@ -18,3 +18,14 @@ function set_from_colors(Colors) (
     gfx_g = Colors.g;
     gfx_b = Colors.b;
 );
+
+function black() (
+    gfx_r = 0;
+    gfx_g = 0;
+    gfx_b = 0;
+);
+function white() (
+    gfx_r = 1;
+    gfx_g = 1;
+    gfx_b = 1;
+);
