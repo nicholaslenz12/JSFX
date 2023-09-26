@@ -30,7 +30,7 @@ function button_create(x, y, r, min_val, max_val, init_val, colors, slider_idx) 
     this.slider_idx = slider_idx;
 );
 
-function button_draw() instance(val) (
+function button_draw(format) instance(val) (
     antialias = 1;
     x = gfx_w * this.x;
     y = gfx_h * this.y;
@@ -38,20 +38,19 @@ function button_draw() instance(val) (
     
     set_from_colors(this.colors);
     gfx_circle(x, y, r, 1, antialias);
-    gfx_r = gfx_g = gfx_b = 0;
-    gfx_rect(x-r, y-r, 2*r, 2*r*((100 - val)/100));
-    gfx_r = gfx_g = gfx_b = 1;
+    black();
+    norm = (val - this.min_val) / (this.max_val - this.min_val);
+    gfx_rect(x-r, y-r, 2*r, 2*r*(1 - norm));
+    white();
     gfx_circle(x, y, r, 0, antialias);
-    gfx_circle(x, y, r + 1, 0, antialias);
-    gfx_circle(x, y, r - 1, 0, antialias);
     #s = "";
-    sprintf(#s, "%d", val);
+    sprintf(#s, format, val);
     a = 1;
     b = 2;
-    x_ = gfx_measurestr(#s, a, b);
+    gfx_measurestr(#s, a, b);
     gfx_x = x - a/2;
     gfx_y = y - b/2;
-    gfx_printf("%d", val);
+    gfx_printf(format, val);
 );
 
 // It's up to external code to change the slider state
@@ -73,8 +72,16 @@ function button_detect_drag() instance(val) (
     );
     
     this.mouse_held && !this.reset ? (
-        delta = (hold_y - mouse_y);
-        val    = delta + val_;
+        delta_norm = (hold_y - mouse_y) / r;
+        
+        a_inv = 2 / (this.max_val - this.min_val);
+        b_inv = -1 * a_inv * this.min_val - 1;
+        val_norm = a_inv * val_ + b_inv;
+
+        a = (this.max_val - this.min_val) / 2;
+        b = (this.max_val + this.min_val) / 2;
+        val = a * (delta_norm + val_norm) + b;
+
         val = min(val, this.max_val);
         val = max(val, this.min_val);
     );
