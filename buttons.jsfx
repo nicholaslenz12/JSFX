@@ -1,0 +1,111 @@
+desc:Buttons
+
+import colors.jsfx
+
+// TODO:
+// - Make reset times independent of framerate
+// - RGB color object parameter
+
+@init
+function button_create(x, y, r, min_val, max_val, init_val, colors) (
+    this.x = x;
+    this.y = y;
+    this.r = r;
+
+    // button_update
+    this.min_val = min_val;
+    this.max_val = max_val;
+    this.init_val = init_val;
+    this.mouse_held = 0;
+
+    // button_reset
+    this.clicked_time = 0;
+    this.unclicked = 0;
+    this.reset_time = 0;
+    this.reset = 0;
+
+    this.colors = colors;
+);
+function button_draw() (
+    antialias = 1;
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    r = min(gfx_w * this.r, gfx_h * this.r);
+    
+    set_from_colors(this.colors);
+    gfx_circle(x, y, r, 1, antialias);
+    gfx_r = gfx_g = gfx_b = 0;
+    gfx_rect(x-r, y-r, 2*r, 2*r*((100 - s1)/100));
+    gfx_r = gfx_g = gfx_b = 1;
+    gfx_circle(x, y, r, 0, antialias);
+    gfx_circle(x, y, r + 1, 0, antialias);
+    gfx_circle(x, y, r - 1, 0, antialias);
+    #s = "";
+    sprintf(#s, "%d", s1);
+    a = 1;
+    b = 2;
+    x_ = gfx_measurestr(#s, a, b);
+    gfx_x = x - a/2;
+    gfx_y = y - b/2;
+    gfx_printf("%d", s1);
+);
+function button_update() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    r = min(gfx_w * this.r, gfx_h * this.r);
+
+    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
+    mouse_cap == 1 && !this.mouse_held && in_range ? (
+        this.mouse_held = 1;
+        hold_x = mouse_x;
+        hold_y = mouse_y;
+        s1_    = s1;
+    );
+    !mouse_cap ? (
+        this.mouse_held = 0;
+    );
+    
+    this.mouse_held ? (
+        delta = (hold_y - mouse_y);
+        s1    = delta + s1_;
+        s1 = min(s1, this.max_val);
+        s1 = max(s1, this.min_val);
+    );
+    slider1 = s1;
+);
+function button_reset() (
+    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
+    
+    in_range ? (
+        // starts the clock awaiting second click
+        mouse_cap && this.clicked_time == 0 && this.reset_time == 0 ? (
+            this.clicked_time = 15;
+            this.unclicked = 0;
+            this.click_x = mouse_x;
+            this.click_y = mouse_y;
+        );
+        
+        // sets await for second click after picking up mouse
+        // also allows knob to be dragged again after reset
+        mouse_cap == 0 ? (
+            this.unclicked = 1;
+            this.reset = 0;
+        );
+
+        // resets knob to init
+        // same_spot = this.click_x == mouse_x && this.click_y == mouse_y;
+        sim_spot = (this.click_x - mouse_x)^2 + (this.click_y - mouse_y)^2 < 10;
+        this.clicked_time > 0 && this.unclicked && mouse_cap && sim_spot ? (
+            s1 = this.init_val;
+            this.clicked_time = 0;
+            this.unclicked = 0;
+            this.reset_time = 10;
+            this.reset = 1;
+        );
+        this.clicked_time = max(this.clicked_time-1, 0);
+        this.reset_time = max(this.reset_time-1, 0);
+        !this.clicked_time ? (this.unclicked = 0);
+        
+        this.reset;
+    );
+);
