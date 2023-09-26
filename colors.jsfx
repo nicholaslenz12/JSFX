@@ -13,10 +13,10 @@ function set_from_values(r, g, b) (
     gfx_b = b;
 );
 
-function set_from_colors(Colors) (
-    gfx_r = Colors.r;
-    gfx_g = Colors.g;
-    gfx_b = Colors.b;
+function set_from_colors() (
+    gfx_r = this.r;
+    gfx_g = this.g;
+    gfx_b = this.b;
 );
 
 function black() (

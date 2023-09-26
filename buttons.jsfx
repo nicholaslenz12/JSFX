@@ -8,7 +8,7 @@ import colors.jsfx
 
 @init
 // If this is not detected to a slider, you can pass 0 for slider_idx
-function button_create(x, y, r, min_val, max_val, init_val, colors, slider_idx) (
+function button_create(x, y, r, min_val, max_val, init_val, slider_idx) (
     this.x = x;
     this.y = y;
     this.r = r;
@@ -38,7 +38,9 @@ function button_draw(format, label) instance(val) (
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
     
-    set_from_colors(this.colors);
+    this.colors.set_from_colors();
+    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
+    in_range || this.mouse_held ? this.colors_hover.set_from_colors();
     gfx_circle(x, y, r, 1, antialias);
     black();
     norm = (val - this.min_val) / (this.max_val - this.min_val);
