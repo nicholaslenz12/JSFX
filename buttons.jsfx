@@ -16,6 +16,7 @@ function button_create(x, y, r, min_val, max_val, init_val, colors) (
     this.min_val = min_val;
     this.max_val = max_val;
     this.init_val = init_val;
+    this.val = init_val; // button keeps track of state? Or should this be elsewhere?
     this.mouse_held = 0;
 
     // button_reset
@@ -26,7 +27,8 @@ function button_create(x, y, r, min_val, max_val, init_val, colors) (
 
     this.colors = colors;
 );
-function button_draw() (
+
+function button_draw() instance(val) (
     antialias = 1;
     x = gfx_w * this.x;
     y = gfx_h * this.y;
@@ -35,21 +37,24 @@ function button_draw() (
     set_from_colors(this.colors);
     gfx_circle(x, y, r, 1, antialias);
     gfx_r = gfx_g = gfx_b = 0;
-    gfx_rect(x-r, y-r, 2*r, 2*r*((100 - s1)/100));
+    gfx_rect(x-r, y-r, 2*r, 2*r*((100 - val)/100));
     gfx_r = gfx_g = gfx_b = 1;
     gfx_circle(x, y, r, 0, antialias);
     gfx_circle(x, y, r + 1, 0, antialias);
     gfx_circle(x, y, r - 1, 0, antialias);
     #s = "";
-    sprintf(#s, "%d", s1);
+    sprintf(#s, "%d", val);
     a = 1;
     b = 2;
     x_ = gfx_measurestr(#s, a, b);
     gfx_x = x - a/2;
     gfx_y = y - b/2;
-    gfx_printf("%d", s1);
+    gfx_printf("%d", val);
 );
-function button_update() (
+
+// It's up to external code to change the slider state
+// (or add a function that updates the slider state?)
+function button_update() instance(val) (
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
@@ -59,7 +64,7 @@ function button_update() (
         this.mouse_held = 1;
         hold_x = mouse_x;
         hold_y = mouse_y;
-        s1_    = s1;
+        val_    = val;
     );
     !mouse_cap ? (
         this.mouse_held = 0;
@@ -67,17 +72,20 @@ function button_update() (
     
     this.mouse_held ? (
         delta = (hold_y - mouse_y);
-        s1    = delta + s1_;
-        s1 = min(s1, this.max_val);
-        s1 = max(s1, this.min_val);
+        val    = delta + val_;
+        val = min(val, this.max_val);
+        val = max(val, this.min_val);
     );
-    slider1 = s1;
 );
-function button_reset() (
+
+function button_reset() instance(val) (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
     in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
     
     in_range ? (
         // starts the clock awaiting second click
+        x____ += 1;
         mouse_cap && this.clicked_time == 0 && this.reset_time == 0 ? (
             this.clicked_time = 15;
             this.unclicked = 0;
@@ -96,7 +104,7 @@ function button_reset() (
         // same_spot = this.click_x == mouse_x && this.click_y == mouse_y;
         sim_spot = (this.click_x - mouse_x)^2 + (this.click_y - mouse_y)^2 < 10;
         this.clicked_time > 0 && this.unclicked && mouse_cap && sim_spot ? (
-            s1 = this.init_val;
+            val = this.init_val;
             this.clicked_time = 0;
             this.unclicked = 0;
             this.reset_time = 10;
@@ -108,4 +116,10 @@ function button_reset() (
         
         this.reset;
     );
+);
+
+function button_update_slider(slider_idx) (
+    sliderchange(2 ^ slider_idx);
+    slider_automate(2 ^ slider_idx);
+    slider(slider_idx) = this.val;
 );
