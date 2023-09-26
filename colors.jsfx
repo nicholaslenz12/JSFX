@@ -1,0 +1,20 @@
+desc:Colors
+
+@init
+function colors_create(r, g, b) (
+    this.r = r;
+    this.g = g;
+    this.b = b;
+);
+
+function set_from_values(r, g, b) (
+    gfx_r = r;
+    gfx_g = g;
+    gfx_b = b;
+);
+
+function set_from_colors(Colors) (
+    gfx_r = Colors.r;
+    gfx_g = Colors.g;
+    gfx_b = Colors.b;
+);
