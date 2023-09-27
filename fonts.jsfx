@@ -9,4 +9,13 @@ function font_create(default, font_name, size) (
 
 function set_from_font() (
     gfx_setfont(this.default, this.font_name, this.size * min(gfx_h, gfx_w));
-)
+);
+function set_from_font_halfsize() (
+    gfx_setfont(this.default, this.font_name, this.size * min(gfx_h, gfx_w) / 2);
+);
+
+function formatter_create(format, mod, label) (
+    this.format = format;
+    this.mod = mod;
+    this.label = label;
+);
