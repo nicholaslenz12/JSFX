@@ -2,6 +2,7 @@ desc:Buttons
 
 import colors.jsfx
 import fonts.jsfx
+import math.jsfx
 
 // TODO:
 // - Make reset times independent of framerate
