@@ -1,0 +1,6 @@
+desc:Buttons
+
+@init
+function round(x) (
+    floor(x + 0.5);
+);
