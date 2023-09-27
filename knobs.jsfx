@@ -1,4 +1,4 @@
-desc:Buttons
+desc:Knobs
 
 import colors.jsfx
 import fonts.jsfx
@@ -11,19 +11,19 @@ import shapes.jsfx
 
 @init
 // If this is not detected to a slider, you can pass 0 for slider_idx
-function button_create(x, y, r, min_val, max_val, init_val, slider_idx) (
+function knob_create(x, y, r, min_val, max_val, init_val, slider_idx) (
     this.x = x;
     this.y = y;
     this.r = r;
 
-    // button_detect_drag
+    // knob_detect_drag
     this.min_val = min_val;
     this.max_val = max_val;
     this.init_val = init_val;
-    this.val = init_val; // button keeps track of state? Or should this be elsewhere?
+    this.val = init_val; // knob keeps track of state? Or should this be elsewhere?
     this.mouse_held = 0;
 
-    // button_detect_reset
+    // knob_detect_reset
     this.clicked_time = 0;
     this.unclicked = 0;
     this.reset_time = 0;
@@ -40,8 +40,8 @@ function check_in_range() (
 );
 
 // Add "" for label to have no label
-// label is used when the button is static
-function button_draw() instance(val) (
+// label is used when the knob is static
+function knob_draw() instance(val) (
     antialias = 1;
     x = gfx_w * this.x;
     y = gfx_h * this.y;
@@ -77,7 +77,7 @@ function button_draw() instance(val) (
     );
 );
 
-function button_draw_arrows() (
+function knob_draw_arrows() (
     this.colors_shapes.set_from_colors();
     this.mouse_held || this.check_in_range() ? (
         x = gfx_w * this.x;
@@ -90,7 +90,7 @@ function button_draw_arrows() (
     );
 );
 
-function button_draw_support_lines() (
+function knob_draw_support_lines() (
     this.colors_shapes.set_from_colors();
     this.mouse_held || this.check_in_range() ? (
         x = gfx_w * this.x;
@@ -105,7 +105,7 @@ function button_draw_support_lines() (
 
 // It's up to external code to change the slider state
 // (or add a function that updates the slider state?)
-function button_detect_drag() instance(val) (
+function knob_detect_drag() instance(val) (
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
@@ -136,7 +136,7 @@ function button_detect_drag() instance(val) (
     );
 );
 
-function button_detect_reset() instance(val) (
+function knob_detect_reset() instance(val) (
     this.check_in_range() ? (
         // starts the clock awaiting second click
         mouse_cap && this.clicked_time == 0 && this.reset_time == 0 ? (
@@ -171,7 +171,7 @@ function button_detect_reset() instance(val) (
     );
 );
 
-function button_update_slider(quant_level) instance(slider_idx) (
+function knob_update_slider(quant_level) instance(slider_idx) (
     slider(slider_idx) != this.val ? (
         // sliderchange(2 ^ (slider_idx-1)); // while having this active cause weird feedback?
         slider_automate(2 ^ (slider_idx-1));
@@ -181,7 +181,7 @@ function button_update_slider(quant_level) instance(slider_idx) (
     );
 );
 
-function button_help_dialog(min_width, min_height, message) (
+function knob_help_dialog(min_width, min_height, message) (
     min_width  *= min(gfx_w, gfx_h);
     min_height *= min(gfx_w, gfx_h);
 
@@ -200,6 +200,6 @@ function button_help_dialog(min_width, min_height, message) (
     );
 );
 
-function button_detect_slider() instance(slider_idx) (
+function knob_detect_slider() instance(slider_idx) (
     this.val = slider(slider_idx);
 );
