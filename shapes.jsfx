@@ -1,0 +1,22 @@
+desc:Shapes
+
+@init
+// direction is in degrees (clockwise!)
+// for now [0, 360); any modulo 360 should be allowed
+function draw_arrow(x, y, length, head_size, direction) (
+    x = gfx_w * x;
+    y = gfx_h * y;
+    length    *= min(gfx_w, gfx_h);
+    head_size *= min(gfx_w, gfx_h);
+
+    rad = direction / 360 * 2 * $pi;
+    x2 = x + length * cos(rad);
+    y2 = y + length * sin(rad);
+    x3 = x2 - head_size * cos(rad - 0.4);
+    y3 = y2 - head_size * sin(rad - 0.4);
+    x4 = x2 - head_size * cos(rad + 0.4);
+    y4 = y2 - head_size * sin(rad + 0.4);
+
+    gfx_line(x, y, x2, y2);
+    gfx_triangle(x2, y2, x3, y3, x4, y4);
+);

@@ -3,6 +3,7 @@ desc:Buttons
 import colors.jsfx
 import fonts.jsfx
 import math.jsfx
+import shapes.jsfx
 
 // TODO:
 // - Make reset times independent of framerate
@@ -31,6 +32,13 @@ function button_create(x, y, r, min_val, max_val, init_val, slider_idx) (
     this.slider_idx = slider_idx;
 );
 
+function check_in_range() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    r = min(gfx_w * this.r, gfx_h * this.r);
+    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
+);
+
 // Add "" for label to have no label
 // label is used when the button is static
 function button_draw() instance(val) (
@@ -41,8 +49,7 @@ function button_draw() instance(val) (
     this.font.set_from_font();
     
     this.colors.set_from_colors();
-    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
-    in_range || this.mouse_held ? this.colors_hover.set_from_colors();
+    this.check_in_range() || this.mouse_held ? this.colors_hover.set_from_colors();
     gfx_circle(x, y, r, 1, antialias);
     black();
     norm = (val - this.min_val) / (this.max_val - this.min_val);
@@ -70,6 +77,14 @@ function button_draw() instance(val) (
     );
 );
 
+function button_draw_arrows() (
+    this.mouse_held || this.check_in_range() ? (
+        shift = 0.13;
+        draw_arrow(this.x, this.y + shift, 0, 0.04, 90);
+        draw_arrow(this.x, this.y - shift, 0, 0.04, 270);
+    );
+);
+
 // It's up to external code to change the slider state
 // (or add a function that updates the slider state?)
 function button_detect_drag() instance(val) (
@@ -77,8 +92,7 @@ function button_detect_drag() instance(val) (
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
 
-    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
-    mouse_cap == 1 && !this.mouse_held && in_range && !this.reset ? (
+    mouse_cap == 1 && !this.mouse_held && this.check_in_range() && !this.reset ? (
         this.mouse_held = 1;
         hold_x = mouse_x;
         hold_y = mouse_y;
@@ -105,11 +119,7 @@ function button_detect_drag() instance(val) (
 );
 
 function button_detect_reset() instance(val) (
-    x = gfx_w * this.x;
-    y = gfx_h * this.y;
-    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
-    
-    in_range ? (
+    this.check_in_range() ? (
         // starts the clock awaiting second click
         mouse_cap && this.clicked_time == 0 && this.reset_time == 0 ? (
             this.clicked_time = 15;
@@ -154,14 +164,10 @@ function button_update_slider(quant_level) instance(slider_idx) (
 );
 
 function button_help_dialog(min_width, min_height, message) (
-    x = gfx_w * this.x;
-    y = gfx_h * this.y;
-    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
-
     min_width  *= min(gfx_w, gfx_h);
     min_height *= min(gfx_w, gfx_h);
 
-    in_range && (!mouse_cap) ? (
+    this.check_in_range() && (!mouse_cap) ? (
         manilla2();
         a = b = 0;
         this.font.set_from_font_halfsize();
