@@ -80,18 +80,26 @@ function button_draw() instance(val) (
 function button_draw_arrows() (
     this.colors_shapes.set_from_colors();
     this.mouse_held || this.check_in_range() ? (
-        shift = 0.13;
-        draw_arrow(this.x, this.y + shift, 0, 0.04, 90);
-        draw_arrow(this.x, this.y - shift, 0, 0.04, 270);
+        x = gfx_w * this.x;
+        y = gfx_h * this.y;
+        r = this.r * min(gfx_w, gfx_h);
+        shift = 0.75 * r;
+
+        draw_arrow(x, y + shift, 0, 0.04, 90);
+        draw_arrow(x, y - shift, 0, 0.04, 270);
     );
 );
 
 function button_draw_support_lines() (
     this.colors_shapes.set_from_colors();
     this.mouse_held || this.check_in_range() ? (
-        shift = 0.05;
-        draw_line(this.x + shift, this.y, 0.04, 0.005, 0);
-        draw_line(this.x - shift, this.y, 0.04, 0.005, 180);
+        x = gfx_w * this.x;
+        y = gfx_h * this.y;
+        r = this.r * min(gfx_w, gfx_h);
+        shift = 0.6 * r;
+
+        draw_line(x + shift, y, 0.08, 0.002, 0);
+        draw_line(x - shift, y, 0.08, 0.002, 180);
     );
 );
 
