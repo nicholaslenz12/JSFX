@@ -19,13 +19,13 @@ function set_from_colors() (
     gfx_b = this.b;
 );
 
-function black() (
-    gfx_r = 0;
-    gfx_g = 0;
-    gfx_b = 0;
-);
-function white() (
-    gfx_r = 1;
-    gfx_g = 1;
-    gfx_b = 1;
+function black()    ( gfx_r = 0;     gfx_g = 0;     gfx_b = 0;     );
+function white()    ( gfx_r = 1;     gfx_g = 1;     gfx_b = 1;     );
+function manilla1() ( gfx_r = 0.996; gfx_g = 0.945; gfx_b = 0.863; );
+function manilla2() ( gfx_r = 0.945; gfx_g = 0.835; gfx_b = 0.573; );
+
+function gray(level) (
+    gfx_r = level;
+    gfx_g = level;
+    gfx_b = level;
 );
