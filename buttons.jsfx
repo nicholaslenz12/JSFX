@@ -153,6 +153,29 @@ function button_update_slider(quant_level) instance(slider_idx) (
     );
 );
 
+function button_help_dialog(min_width, min_height, message) (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
+
+    min_width  *= min(gfx_w, gfx_h);
+    min_height *= min(gfx_w, gfx_h);
+
+    in_range && (!mouse_cap) ? (
+        manilla2();
+        a = b = 0;
+        this.font.set_from_font_halfsize();
+        gfx_measurestr(message, a, b);
+        a = max(min_width,  a);
+        b = max(min_height, b);
+        gfx_rect(mouse_x, mouse_y, a * 1.2, b * 1.2);
+        gfx_x = mouse_x + a * 0.1;
+        gfx_y = mouse_y + b * 0.1;
+        black();
+        gfx_drawstr(message);
+    );
+);
+
 function button_detect_slider() instance(slider_idx) (
     this.val = slider(slider_idx);
 );
