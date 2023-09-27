@@ -138,10 +138,12 @@ function button_detect_reset() instance(val) (
     );
 );
 
-function button_update_slider() instance(slider_idx) (
+function button_update_slider(quant_level) instance(slider_idx) (
     slider(slider_idx) != this.val ? (
         // sliderchange(2 ^ (slider_idx-1)); // while having this active cause weird feedback?
         slider_automate(2 ^ (slider_idx-1));
+        // provide valid quantization level for the slider (do this elsewhere?)
+        this.val = quant_level * round((this.val - this.min_val) / quant_level) + this.min_val;
         slider(slider_idx) = this.val;
     );
 );
