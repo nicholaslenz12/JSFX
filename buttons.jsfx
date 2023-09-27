@@ -85,6 +85,14 @@ function button_draw_arrows() (
     );
 );
 
+function button_draw_support_lines() (
+    this.mouse_held || this.check_in_range() ? (
+        shift = 0.05;
+        draw_line(this.x + shift, this.y, 0.04, 0.005, 0);
+        draw_line(this.x - shift, this.y, 0.04, 0.005, 180);
+    );
+);
+
 // It's up to external code to change the slider state
 // (or add a function that updates the slider state?)
 function button_detect_drag() instance(val) (

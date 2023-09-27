@@ -20,3 +20,31 @@ function draw_arrow(x, y, length, head_size, direction) (
     gfx_line(x, y, x2, y2);
     gfx_triangle(x2, y2, x3, y3, x4, y4);
 );
+
+function draw_line(x, y, length, thick, direction) (
+    x = gfx_w * x;
+    y = gfx_h * y;
+    length    *= min(gfx_w, gfx_h);
+    thick     *= min(gfx_w, gfx_h);
+
+    rad = direction / 360 * 2 * $pi;
+    x2 = x + length * cos(rad);
+    y2 = y + length * sin(rad);
+
+    half_thick = thick / 2;
+    r_x1 = x2 + half_thick * cos(rad - $pi/2);
+    r_y1 = y2 + half_thick * sin(rad - $pi/2);
+    r_x2 = x2 + half_thick * cos(rad + $pi/2);
+    r_y2 = y2 + half_thick * sin(rad + $pi/2);
+    r_x3 =  x + half_thick * cos(rad - $pi/2);
+    r_y3 =  y + half_thick * sin(rad - $pi/2);
+    r_x4 =  x + half_thick * cos(rad + $pi/2);
+    r_y4 =  y + half_thick * sin(rad + $pi/2);
+
+    gfx_triangle(
+        r_x1, r_y1,
+        r_x2, r_y2,
+        r_x3, r_y3,
+        r_x4, r_y4
+    );
+);
