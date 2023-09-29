@@ -3,19 +3,18 @@ options:gfx_hz=60
 
 import knobs.jsfx
 import shapes.jsfx
+import math.jsfx
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
-slider1:1<0,6,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32, 1/64}>-Rate (Synced)
+slider1:0<0,6,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32, 1/64}>Rate (Synced)
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
 // ----------------------------------------------------------------------------
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:none
+out_pin:none
 
 // ----------------------------------------------------------------------------
 // INIT
@@ -23,10 +22,19 @@ out_pin:right output
 @init
 gfx_ext_retina = 1;
 
-knob1.knob_create(1/2, 1/2, 1/5, 0, 6, 1, 3);
+knob1.knob_create(1/2, 1/2, 1/5, 0, 6, 0, 1);
 knob1.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
 knob1.formatter.formatter_create("1/%d", "Power", "");
 knob1.colors_shapes.colors_create(1, 1, 1);
+
+NOTE_ON  = $x90;
+NOTE_OFF = $x80;
+
+length = 0.3;
+t_beat = 0;
+
+prev_note_ons = 0;
+note_on_count = 1;
 
 // ----------------------------------------------------------------------------
 // SLIDER
@@ -35,17 +43,54 @@ knob1.colors_shapes.colors_create(1, 1, 1);
 knob1.knob_detect_slider();
 
 // ----------------------------------------------------------------------------
+// BLOCK
+// ----------------------------------------------------------------------------
+@block
+// while (midirecv(offset, cmd, key, vel)) (
+//     cmd == NOTE_ON && vel != 0 ? (
+//         note_on_count += 1; // count note-ons
+//     ) : (
+//         midisend(offset, cmd, key, vel); // passthrough other events
+//     );
+// );
+// 
+// initialize start of playback before start of sample processing block
+note_on_count > 0 && prev_note_ons == 0 ? (
+    t_beat = 1;
+    prev_note_ons = 1;
+);
+
+// can we do this elsewhere?
+beat_fraction = 2 ^ -slider(knob1.slider_idx);
+cycle_rate = 1/srate * tempo/60 / beat_fraction;
+sample_position = 0;
+
+@block
+
+// ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
+t_beat += cycle_rate;
 
+t_beat >= 1.0 ? (
+    t_beat -= 1;
+    midisend(sample_position, NOTE_ON, 60, 127);
+);
+
+t_beat >= length ? (
+    midisend(sample_position, NOTE_OFF, 60, 127);
+);
+
+sample_position += 1;
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
-@gfx 600 400
+@gfx 600 600
 
 knob1.knob_draw();
 knob1.knob_detect_reset();
 knob1.knob_detect_drag();
 knob1.knob_update_slider(1);
 knob1.knob_draw_arrows();
+sliderchange(slider1);
