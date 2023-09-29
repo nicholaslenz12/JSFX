@@ -48,13 +48,13 @@ function knob_draw() instance(val) (
     r = min(gfx_w * this.r, gfx_h * this.r);
     this.font.set_from_font();
     
-    this.colors.set_from_colors();
-    this.check_in_range() || this.mouse_held ? this.colors_hover.set_from_colors();
+    this.colors.gfx_colors_from_color();
+    this.check_in_range() || this.mouse_held ? this.colors_hover.gfx_colors_from_color();
     gfx_circle(x, y, r, 1, antialias);
-    black();
+    background.gfx_colors_from_color();
     norm = (val - this.min_val) / (this.max_val - this.min_val);
     gfx_rect(x-r, y-r, 2*r, 2*r*(1 - norm));
-    white();
+    this.colors_shapes.gfx_colors_from_color();
     gfx_circle(x, y, r, 0, antialias);
     (strlen(this.formatter.label) > 0) && (!this.mouse_held) ? ( // draw label
         a = b = 0;
@@ -78,7 +78,7 @@ function knob_draw() instance(val) (
 );
 
 function knob_draw_arrows() (
-    this.colors_shapes.set_from_colors();
+    this.colors_shapes.gfx_colors_from_color();
     this.mouse_held || this.check_in_range() ? (
         x = gfx_w * this.x;
         y = gfx_h * this.y;
@@ -91,7 +91,7 @@ function knob_draw_arrows() (
 );
 
 function knob_draw_support_lines() (
-    this.colors_shapes.set_from_colors();
+    this.colors_shapes.gfx_colors_from_color();
     this.mouse_held || this.check_in_range() ? (
         x = gfx_w * this.x;
         y = gfx_h * this.y;
@@ -186,7 +186,7 @@ function knob_help_dialog(min_width, min_height, message) (
     min_height *= min(gfx_w, gfx_h);
 
     this.check_in_range() && (!mouse_cap) ? (
-        manilla2();
+        MANILLA1.gfx_colors_from_color();
         a = b = 0;
         this.font.set_from_font_halfsize();
         gfx_measurestr(message, a, b);
@@ -195,7 +195,7 @@ function knob_help_dialog(min_width, min_height, message) (
         gfx_rect(mouse_x, mouse_y, a * 1.2, b * 1.2);
         gfx_x = mouse_x + a * 0.1;
         gfx_y = mouse_y + b * 0.1;
-        black();
+        BLACK.gfx_colors_from_color();
         gfx_drawstr(message);
     );
 );

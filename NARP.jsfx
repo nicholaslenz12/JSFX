@@ -22,19 +22,26 @@ out_pin:none
 @init
 gfx_ext_retina = 1;
 
-knob1.knob_create(1/2, 1/2, 1/5, 0, 6, 0, 1);
+background.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+
+knob1.knob_create(1/2, 1/2, 1/5, 0, 6, 2, 1);
 knob1.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
 knob1.formatter.formatter_create("1/%d", "Power", "");
-knob1.colors_shapes.colors_create(1, 1, 1);
+
+knob1.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+knob1.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+knob1.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
 NOTE_ON  = $x90;
 NOTE_OFF = $x80;
 
-length = 0.5;
+length = 0.8;
 t_beat = 0;
 
 prev_note_ons = 0;
 note_on_count = 1;
+
+note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
 
 // ----------------------------------------------------------------------------
 // SLIDER
@@ -89,7 +96,10 @@ sample_position += 1;
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
-@gfx 600 600
+@gfx 624 395
+
+background.gfx_colors_from_color();
+gfx_rect(0, 0, gfx_w, gfx_h);
 
 knob1.knob_draw();
 knob1.knob_detect_reset();
