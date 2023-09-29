@@ -8,7 +8,7 @@ import math.jsfx
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
-slider1:0<0,6,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32, 1/64}>Rate (Synced)
+slider1:0<0,6,2{1/1,1/2, 1/4, 1/8, 1/16, 1/32, 1/64}>Rate (Synced)
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -30,7 +30,7 @@ knob1.colors_shapes.colors_create(1, 1, 1);
 NOTE_ON  = $x90;
 NOTE_OFF = $x80;
 
-length = 0.3;
+length = 0.5;
 t_beat = 0;
 
 prev_note_ons = 0;
@@ -55,15 +55,18 @@ knob1.knob_detect_slider();
 // );
 // 
 // initialize start of playback before start of sample processing block
-note_on_count > 0 && prev_note_ons == 0 ? (
-    t_beat = 1;
-    prev_note_ons = 1;
-);
 
 // can we do this elsewhere?
 beat_fraction = 2 ^ -slider(knob1.slider_idx);
 cycle_rate = 1/srate * tempo/60 / beat_fraction;
 sample_position = 0;
+
+cycle_length = srate * 60/tempo * beat_fraction;
+
+note_on_count > 0 && prev_note_ons == 0 ? (
+    t_beat = cycle_length;
+    prev_note_ons = 1;
+);
 
 @block
 
@@ -71,14 +74,14 @@ sample_position = 0;
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
-t_beat += cycle_rate;
+t_beat += 1;
 
-t_beat >= 1.0 ? (
-    t_beat -= 1;
+t_beat >= cycle_length ? (
+    t_beat -= cycle_length;
     midisend(sample_position, NOTE_ON, 60, 127);
 );
 
-t_beat >= length ? (
+t_beat >= length * cycle_length ? (
     midisend(sample_position, NOTE_OFF, 60, 127);
 );
 
