@@ -13,6 +13,7 @@ import testing.jsfx
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
+slider3:1<0,1,1{Up,Down}>Direction
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -110,7 +111,7 @@ t_beat += 1;
 
 note_list.length > 0 && t_beat >= cycle_length && !playing_note ? (
     t_beat -= cycle_length;
-    current_note = note_list.find_larger_cyclic(current_note);
+    current_note = note_list.find_next_cyclic(current_note, slider3 == 0 ? FORWARD : BACKWARD);
     midisend(sample_position, NOTE_ON, current_note, 127);
     playing_note = 1;
 );

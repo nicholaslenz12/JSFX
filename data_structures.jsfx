@@ -68,20 +68,30 @@ function sort() local(sorted, n, temp, flips) (
     );
 );
 
-function min() local(i, m, n) (
-    m = this[0];
-
-    i = 0;
+// Avoid copy past here?
+function min() local(x, n) (
+    x = this[0];
     n = 1;
     loop(this.length-1,
-        this[n] < m ? (
-            m = this[n];
-            i = n;
+        this[n] < x ? (
+            x = this[n];
         );
         n += 1;
     );
 
-    m;
+    x;
+);
+function max() local(x, n) (
+    x = this[0];
+    n = 1;
+    loop(this.length-1,
+        this[n] > x ? (
+            x = this[n];
+        );
+        n += 1;
+    );
+
+    x;
 );
 
 function end() (
@@ -96,19 +106,24 @@ function clear() (
 // during the MIDI receive block
 // Be careful since this is not thread-safe with respect to `this`
 // This is a bit complicated
-function find_larger_cyclic(val) local(n, ret, idx) (
+function find_next_cyclic(val, direction) local(n, ret, idx, found) (
     n = 0;
-    larger_than = this.end() + 1; // align memory to just after `this`
+    potential_next = this.end() + 1; // align memory to just after `this`
 
     loop(this.length,
-        this[n] > val ? (
-            larger_than.push(this[n]);
+        found = direction == FORWARD ? this[n] > val : this[n] < val;
+        found ? (
+            potential_next.push(this[n]);
         );
         n += 1;
     );
 
-    ret = larger_than.length == 0 ? this.min() : larger_than.min();
-    larger_than.clear();
+    direction == FORWARD ? (
+        ret = potential_next.length == 0 ? this.min() : potential_next.min();
+    ) : (
+        ret = potential_next.length == 0 ? this.max() : potential_next.max();
+    );
+    potential_next.clear();
 
     ret;
 );
