@@ -27,13 +27,13 @@ gfx_ext_retina = 1;
 
 background.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
-knob1.knob_create(1/2, 1/2, 1/5, 0, 5, 3, 1);
-knob1.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
-knob1.formatter.formatter_create("1/%d", "Power", "");
-knob1.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
-knob1.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
-knob1.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
-knob1.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+rate_knob.knob_create(1/2, 1/2, 1/5, 0, 5, 3, 1);
+rate_knob.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
+rate_knob.formatter.formatter_create("1/%d", "Power", "");
+rate_knob.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+rate_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+rate_knob.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+rate_knob.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
 length_knob.knob_create(0.65, 0.75, 0.10, 0.01, 1, 1, 2);
 length_knob.font.font_create(1, "Arial", 0.05);
@@ -56,7 +56,7 @@ playing_note = 0;
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-knob1.knob_detect_slider();
+rate_knob.knob_detect_slider();
 length_knob.knob_detect_slider();
 
 // ----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ note_list.length == 0 && current_note_idx >= 0 ? (
 );
 
 // can we do this elsewhere?
-beat_fraction = 2 ^ -slider(knob1.slider_idx);
+beat_fraction = 2 ^ -slider(rate_knob.slider_idx);
 cycle_rate = 1/srate * tempo/60 / beat_fraction / 4;
 sample_position = 0;
 
@@ -126,11 +126,11 @@ sample_position += 1;
 background.gfx_colors_from_color();
 gfx_rect(0, 0, gfx_w, gfx_h);
 
-knob1.knob_draw();
-knob1.knob_detect_reset();
-knob1.knob_detect_drag();
-knob1.knob_update_slider(1);
-knob1.knob_draw_arrows();
+rate_knob.knob_draw();
+rate_knob.knob_detect_reset();
+rate_knob.knob_detect_drag();
+rate_knob.knob_update_slider(1);
+rate_knob.knob_draw_arrows();
 // sliderchange(slider1);
 
 length_knob.knob_draw();
