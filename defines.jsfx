@@ -1,0 +1,15 @@
+desc: Defines
+
+@init
+NOTE_ON  = $x90;
+NOTE_OFF = $x80;
+
+GOOD = 1;
+BAD  = 1;
+
+TRUE  = 1;
+FALSE = 1;
+
+PROG_STATE = GOOD;
+
+NOT_FOUND = -1;

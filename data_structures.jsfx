@@ -1,0 +1,49 @@
+desc:Data Structures
+
+@init
+// Array-like
+
+// Need this or just find()?
+function contains(val) local(n) (
+    result = 0;
+    n = 0;
+    loop(this.length, // use while to break early?
+        this[n] == val ? result = 1;
+        n += 1;
+    );
+    
+    result;
+);
+
+function find(val) local(n) (
+    result = NOT_FOUND;
+    n = 0;
+    loop(this.length, // use while to break early?
+        this[n] == val ? result = n;
+        n += 1;
+    );
+    
+    result;
+);
+
+function push(val) (
+    this[this.length] = val;
+    this.length += 1;
+);
+
+function remove_at(idx) local(n, num_move) (
+    num_move = this.length - idx - 1;
+    n = 0;
+    loop(num_move,
+        this[idx + n] = this[idx + n + 1];
+        n += 1;
+    );
+    this.length -= 1;
+);
+
+function remove(val) local(n, idx) (
+    idx = this.find(val);
+    !(idx == NOT_FOUND) ? (
+        this.remove_at(idx);
+    );
+);
