@@ -11,6 +11,7 @@ import data_structures.jsfx
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
+slider2:1<0.01,1,0.01>Length
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -29,12 +30,10 @@ background.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 knob1.knob_create(1/2, 1/2, 1/5, 0, 5, 3, 1);
 knob1.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
 knob1.formatter.formatter_create("1/%d", "Power", "");
-
 knob1.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 knob1.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 knob1.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
-length = 0.99;
 t_beat = 0;
 
 prev_note_ons = 0;
@@ -49,6 +48,7 @@ playing_note = 0;
 // ----------------------------------------------------------------------------
 @slider
 knob1.knob_detect_slider();
+length = slider2;
 
 // ----------------------------------------------------------------------------
 // BLOCK
