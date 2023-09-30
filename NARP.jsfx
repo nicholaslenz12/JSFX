@@ -42,6 +42,7 @@ note_on_count = 1;
 
 note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
 current_note_idx = -1;
+playing_note = 0;
 
 // ----------------------------------------------------------------------------
 // SLIDER
@@ -95,14 +96,16 @@ note_list.length > 0 && prev_list_len == 0 ? (
 @sample
 t_beat += 1;
 
-note_list.length > 0 && t_beat >= cycle_length ? (
+note_list.length > 0 && t_beat >= cycle_length && !playing_note ? (
     t_beat -= cycle_length;
     current_note_idx = mod_pos(current_note_idx+1, note_list.length);
     midisend(sample_position, NOTE_ON, note_list[current_note_idx], 127);
+    playing_note = 1;
 );
 
-note_list.length > 0 && t_beat >= length * cycle_length ? (
+note_list.length > 0 && t_beat >= length * cycle_length && playing_note ? (
     midisend(sample_position, NOTE_OFF, note_list[current_note_idx], 127);
+    playing_note = 0;
 );
 
 sample_position += 1;
