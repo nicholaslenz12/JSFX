@@ -56,6 +56,7 @@ function knob_draw() instance(val) (
     gfx_rect(x-r, y-r, 2*r, 2*r*(1 - norm));
     this.colors_shapes.gfx_colors_from_color();
     gfx_circle(x, y, r, 0, antialias);
+    this.colors_font.gfx_colors_from_color();
     (strlen(this.formatter.label) > 0) && (!this.mouse_held) ? ( // draw label
         a = b = 0;
         gfx_measurestr(this.formatter.label, a, b);

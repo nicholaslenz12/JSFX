@@ -11,7 +11,7 @@ import data_structures.jsfx
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
-slider2:1<0.01,1,0.01>Length
+slider2:1<0.01,1,0.01>-Length
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -31,8 +31,17 @@ knob1.knob_create(1/2, 1/2, 1/5, 0, 5, 3, 1);
 knob1.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
 knob1.formatter.formatter_create("1/%d", "Power", "");
 knob1.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+knob1.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 knob1.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 knob1.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+
+length_knob.knob_create(0.65, 0.75, 0.10, 0.01, 1, 1, 2);
+length_knob.font.font_create(1, "Arial", 0.05);
+length_knob.formatter.formatter_create("%0.2f", "Direct", "Length");
+length_knob.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+length_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+length_knob.colors.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
+length_knob.colors_hover.color_create(GORANGE.r, GORANGE.g, GORANGE.b);
 
 t_beat = 0;
 
@@ -48,7 +57,7 @@ playing_note = 0;
 // ----------------------------------------------------------------------------
 @slider
 knob1.knob_detect_slider();
-length = slider2;
+length_knob.knob_detect_slider();
 
 // ----------------------------------------------------------------------------
 // BLOCK
@@ -103,7 +112,7 @@ note_list.length > 0 && t_beat >= cycle_length && !playing_note ? (
     playing_note = 1;
 );
 
-note_list.length > 0 && t_beat >= length * cycle_length && playing_note ? (
+note_list.length > 0 && t_beat >= slider(length_knob.slider_idx) * cycle_length && playing_note ? (
     midisend(sample_position, NOTE_OFF, note_list[current_note_idx], 127);
     playing_note = 0;
 );
@@ -122,7 +131,12 @@ knob1.knob_detect_reset();
 knob1.knob_detect_drag();
 knob1.knob_update_slider(1);
 knob1.knob_draw_arrows();
-sliderchange(slider1);
+// sliderchange(slider1);
+
+length_knob.knob_draw();
+length_knob.knob_detect_reset();
+length_knob.knob_detect_drag();
+length_knob.knob_update_slider(0.01);
 
 PROG_STATE != GOOD ? (
     gfx_drawstr("BAD BAD BAD!");

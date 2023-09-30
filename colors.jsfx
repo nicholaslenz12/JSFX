@@ -32,6 +32,8 @@ WHITE.color_create(             1,       1,       1); // #ffffff
 MANILLA1.color_create(      0.996,   0.945,   0.863); // #fef1dc
 MANILLA2.color_create(      0.945,   0.835,   0.573); // #f1d592
 SOFTORANGE.color_create(  228/255, 188/255, 132/255); // #e4bc84
+GORANGE.color_create(     223/255, 177/255, 111/255); // #dfb16f
+BORANGE.color_create(     219/255, 165/255,  90/255); // #dba55a
 LIGHTORANGE.color_create( 242/255, 222/255, 195/255); // #f2dec3
 COFFEE.color_create(      135/255,  90/255,  71/255); // #875a47
 

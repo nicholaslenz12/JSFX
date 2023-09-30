@@ -1,5 +1,7 @@
 desc:Data Structures
 
+import defines.jsfx
+
 @init
 // Array-like
 
@@ -45,5 +47,23 @@ function remove(val) local(n, idx) (
     idx = this.find(val);
     !(idx == NOT_FOUND) ? (
         this.remove_at(idx);
+    );
+);
+
+function sort() local(sorted, n, temp, flips) (
+    sorted = this.length < 2;
+    while (!sorted) (
+        flips = 0;
+        n = 0;
+        loop(this.length-1,
+            this[n] > this[n+1] ? (
+                temp = this[n+1];
+                this[n+1] = this[n];
+                this[n] = temp;
+                flips += 1;
+            );
+            n += 1;
+        );
+        sorted = flips == 0;
     );
 );
