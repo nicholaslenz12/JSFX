@@ -8,7 +8,7 @@ import math.jsfx
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
-slider1:0<0,6,2{1/1,1/2, 1/4, 1/8, 1/16, 1/32, 1/64}>Rate (Synced)
+slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -24,7 +24,7 @@ gfx_ext_retina = 1;
 
 background.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
-knob1.knob_create(1/2, 1/2, 1/5, 0, 6, 2, 1);
+knob1.knob_create(1/2, 1/2, 1/5, 0, 5, 3, 1);
 knob1.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
 knob1.formatter.formatter_create("1/%d", "Power", "");
 
@@ -35,13 +35,15 @@ knob1.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 NOTE_ON  = $x90;
 NOTE_OFF = $x80;
 
-length = 0.8;
+length = 0.99;
 t_beat = 0;
 
 prev_note_ons = 0;
 note_on_count = 1;
 
 note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
+note_list_len = 0;
+current_note_idx = -1;
 
 // ----------------------------------------------------------------------------
 // SLIDER
@@ -53,29 +55,42 @@ knob1.knob_detect_slider();
 // BLOCK
 // ----------------------------------------------------------------------------
 @block
-// while (midirecv(offset, cmd, key, vel)) (
-//     cmd == NOTE_ON && vel != 0 ? (
-//         note_on_count += 1; // count note-ons
-//     ) : (
-//         midisend(offset, cmd, key, vel); // passthrough other events
-//     );
-// );
-// 
-// initialize start of playback before start of sample processing block
+prev_list_len = note_list_len;
+while (midirecv(offset, cmd, note, vel)) (
+    cmd == NOTE_ON && vel > 0 ? ( // Add note to the note list
+        !note_list[note] ? (
+            note_list[note_list_len] = note;
+            note_list_len += 1;
+        );
+    ) : (cmd == NOTE_OFF || m == NOTE_ON) ? ( // Remove note from note list, (kill note if being played)
+        note_list[note] ? (
+            midisend(offset, NOTE_OFF, note);
+            current_note_idx = -1;
+        );
+        note_list_len -= 1;
+    ) : ( // passthrough other events
+        midisend(offset, cmd, key, vel);
+    );
+);
+
+// kill any dangling notes (risk of FLP error?)
+note_list_len == 0 && current_note_idx >= 0 ? (
+    midisend(0, NOTE_OFF, note_list[current_note_idx]);
+    current_note_idx = -1;
+);
 
 // can we do this elsewhere?
 beat_fraction = 2 ^ -slider(knob1.slider_idx);
-cycle_rate = 1/srate * tempo/60 / beat_fraction;
+cycle_rate = 1/srate * tempo/60 / beat_fraction / 4;
 sample_position = 0;
 
-cycle_length = srate * 60/tempo * beat_fraction;
+cycle_length = srate * 60/tempo * beat_fraction * 4;
 
-note_on_count > 0 && prev_note_ons == 0 ? (
+// Just starting, so start playout of next note immediately
+note_list_len > 0 && prev_list_len == 0 ? (
     t_beat = cycle_length;
     prev_note_ons = 1;
 );
-
-@block
 
 // ----------------------------------------------------------------------------
 // SAMPLE
@@ -83,13 +98,14 @@ note_on_count > 0 && prev_note_ons == 0 ? (
 @sample
 t_beat += 1;
 
-t_beat >= cycle_length ? (
+note_list_len > 0 && t_beat >= cycle_length ? (
     t_beat -= cycle_length;
-    midisend(sample_position, NOTE_ON, 60, 127);
+    current_note_idx = mod_pos(current_note_idx+1, note_list_len);
+    midisend(sample_position, NOTE_ON, note_list[current_note_idx], 127);
 );
 
-t_beat >= length * cycle_length ? (
-    midisend(sample_position, NOTE_OFF, 60, 127);
+note_list_len > 0 && t_beat >= length * cycle_length ? (
+    midisend(sample_position, NOTE_OFF, note_list[current_note_idx], 127);
 );
 
 sample_position += 1;
