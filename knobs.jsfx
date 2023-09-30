@@ -1,0 +1,205 @@
+desc:Knobs
+
+import colors.jsfx
+import fonts.jsfx
+import math.jsfx
+import shapes.jsfx
+
+// TODO:
+// - Make reset times independent of framerate
+// - RGB color object parameter
+
+@init
+// If this is not detected to a slider, you can pass 0 for slider_idx
+function knob_create(x, y, r, min_val, max_val, init_val, slider_idx) (
+    this.x = x;
+    this.y = y;
+    this.r = r;
+
+    // knob_detect_drag
+    this.min_val = min_val;
+    this.max_val = max_val;
+    this.init_val = init_val;
+    this.val = init_val; // knob keeps track of state? Or should this be elsewhere?
+    this.mouse_held = 0;
+
+    // knob_detect_reset
+    this.clicked_time = 0;
+    this.unclicked = 0;
+    this.reset_time = 0;
+    this.reset = 0;
+
+    this.slider_idx = slider_idx;
+);
+
+function check_in_range() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    r = min(gfx_w * this.r, gfx_h * this.r);
+    in_range = (mouse_x - x)^2 + (mouse_y - y)^2 < r^2;
+);
+
+// Add "" for label to have no label
+// label is used when the knob is static
+function knob_draw() instance(val) (
+    antialias = 1;
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    r = min(gfx_w * this.r, gfx_h * this.r);
+    this.font.set_from_font();
+    
+    this.colors.set_from_colors();
+    this.check_in_range() || this.mouse_held ? this.colors_hover.set_from_colors();
+    gfx_circle(x, y, r, 1, antialias);
+    black();
+    norm = (val - this.min_val) / (this.max_val - this.min_val);
+    gfx_rect(x-r, y-r, 2*r, 2*r*(1 - norm));
+    white();
+    gfx_circle(x, y, r, 0, antialias);
+    (strlen(this.formatter.label) > 0) && (!this.mouse_held) ? ( // draw label
+        a = b = 0;
+        gfx_measurestr(this.formatter.label, a, b);
+        gfx_x = x - a/2;
+        gfx_y = y - b/2;
+        gfx_printf("%s", this.formatter.label);
+    ) : ( // draw parameter value
+        #s = "";
+        strcmp(this.formatter.mod, "Direct") == 0 ? (
+            val__ = val;
+        ) : strcmp(this.formatter.mod, "Power") == 0 ? (
+            val__ = 2^val;
+        );
+        sprintf(#s, this.formatter.format, val__);
+        gfx_measurestr(#s, a, b);
+        gfx_x = x - a/2;
+        gfx_y = y - b/2;
+        gfx_printf(this.formatter.format, val__);
+    );
+);
+
+function knob_draw_arrows() (
+    this.colors_shapes.set_from_colors();
+    this.mouse_held || this.check_in_range() ? (
+        x = gfx_w * this.x;
+        y = gfx_h * this.y;
+        r = this.r * min(gfx_w, gfx_h);
+        shift = 0.75 * r;
+
+        draw_arrow(x, y + shift, 0, 0.04, 90);
+        draw_arrow(x, y - shift, 0, 0.04, 270);
+    );
+);
+
+function knob_draw_support_lines() (
+    this.colors_shapes.set_from_colors();
+    this.mouse_held || this.check_in_range() ? (
+        x = gfx_w * this.x;
+        y = gfx_h * this.y;
+        r = this.r * min(gfx_w, gfx_h);
+        shift = 0.6 * r;
+
+        draw_line(x + shift, y, 0.08, 0.002, 0);
+        draw_line(x - shift, y, 0.08, 0.002, 180);
+    );
+);
+
+// It's up to external code to change the slider state
+// (or add a function that updates the slider state?)
+function knob_detect_drag() instance(val) (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    r = min(gfx_w * this.r, gfx_h * this.r);
+
+    mouse_cap == 1 && !this.mouse_held && this.check_in_range() && !this.reset ? (
+        this.mouse_held = 1;
+        hold_x = mouse_x;
+        hold_y = mouse_y;
+        val_    = val;
+    );
+    !mouse_cap ? (
+        this.mouse_held = 0;
+    );
+    
+    this.mouse_held && !this.reset ? (
+        delta_norm = (hold_y - mouse_y) / r;
+        
+        a_inv = 2 / (this.max_val - this.min_val);
+        b_inv = -1 * a_inv * this.min_val - 1;
+        val_norm = a_inv * val_ + b_inv;
+
+        a = (this.max_val - this.min_val) / 2;
+        b = (this.max_val + this.min_val) / 2;
+        val = a * (delta_norm + val_norm) + b;
+
+        val = min(val, this.max_val);
+        val = max(val, this.min_val);
+    );
+);
+
+function knob_detect_reset() instance(val) (
+    this.check_in_range() ? (
+        // starts the clock awaiting second click
+        mouse_cap && this.clicked_time == 0 && this.reset_time == 0 ? (
+            this.clicked_time = 15;
+            this.unclicked = 0;
+            this.click_x = mouse_x;
+            this.click_y = mouse_y;
+        );
+        
+        // sets await for second click after picking up mouse
+        // also allows knob to be dragged again after reset
+        mouse_cap == 0 ? (
+            this.unclicked = 1;
+            this.reset = 0;
+        );
+
+        // resets knob to init
+        // same_spot = this.click_x == mouse_x && this.click_y == mouse_y;
+        sim_spot = (this.click_x - mouse_x)^2 + (this.click_y - mouse_y)^2 < 10;
+        this.clicked_time > 0 && this.unclicked && mouse_cap && sim_spot ? (
+            val = this.init_val;
+            this.clicked_time = 0;
+            this.unclicked = 0;
+            this.reset_time = 10;
+            this.reset = 1;
+        );
+        this.clicked_time = max(this.clicked_time-1, 0);
+        this.reset_time = max(this.reset_time-1, 0);
+        !this.clicked_time ? (this.unclicked = 0);
+        
+        this.reset;
+    );
+);
+
+function knob_update_slider(quant_level) instance(slider_idx) (
+    slider(slider_idx) != this.val ? (
+        // sliderchange(2 ^ (slider_idx-1)); // while having this active cause weird feedback?
+        slider_automate(2 ^ (slider_idx-1));
+        // provide valid quantization level for the slider (do this elsewhere?)
+        this.val = quant_level * round((this.val - this.min_val) / quant_level) + this.min_val;
+        slider(slider_idx) = this.val;
+    );
+);
+
+function knob_help_dialog(min_width, min_height, message) (
+    min_width  *= min(gfx_w, gfx_h);
+    min_height *= min(gfx_w, gfx_h);
+
+    this.check_in_range() && (!mouse_cap) ? (
+        manilla2();
+        a = b = 0;
+        this.font.set_from_font_halfsize();
+        gfx_measurestr(message, a, b);
+        a = max(min_width,  a);
+        b = max(min_height, b);
+        gfx_rect(mouse_x, mouse_y, a * 1.2, b * 1.2);
+        gfx_x = mouse_x + a * 0.1;
+        gfx_y = mouse_y + b * 0.1;
+        black();
+        gfx_drawstr(message);
+    );
+);
+
+function knob_detect_slider() instance(slider_idx) (
+    this.val = slider(slider_idx);
+);

@@ -1,0 +1,6 @@
+desc:Math
+
+@init
+function round(x) (
+    floor(x + 0.5);
+);
