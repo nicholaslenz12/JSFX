@@ -52,6 +52,12 @@ note_list = 0; // stores binary for key pressed, native reaper arp uses velociti
 current_note_idx = -1;
 playing_note = 0;
 
+// x__ = 0;
+// x__.push(2);
+// x__.push(-1);
+// x__.push(3);
+// x____ = x__.find_larger_cyclic(3);
+
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
@@ -72,7 +78,7 @@ while (midirecv(offset, cmd, note, vel)) (
     ) : (cmd == NOTE_OFF || cmd == NOTE_ON) ? ( // Remove note from note list, (kill note if being played)
         note_list.contains(note) ? (
             midisend(offset, NOTE_OFF, note);
-            current_note_idx = -1;
+            current_note = NONE;
         );
         note_list.remove(note);
     ) : ( // passthrough other events
@@ -81,9 +87,9 @@ while (midirecv(offset, cmd, note, vel)) (
 );
 
 // kill any dangling notes (risk of FLP error?)
-note_list.length == 0 && current_note_idx >= 0 ? (
-    midisend(0, NOTE_OFF, note_list[current_note_idx]);
-    current_note_idx = -1;
+note_list.length == 0 && current_note != NONE ? (
+    midisend(0, NOTE_OFF, current_note);
+    current_note = NONE;
 );
 
 // can we do this elsewhere?
@@ -107,13 +113,13 @@ t_beat += 1;
 
 note_list.length > 0 && t_beat >= cycle_length && !playing_note ? (
     t_beat -= cycle_length;
-    current_note_idx = mod_pos(current_note_idx+1, note_list.length);
-    midisend(sample_position, NOTE_ON, note_list[current_note_idx], 127);
+    current_note = note_list.find_larger_cyclic(current_note);
+    midisend(sample_position, NOTE_ON, current_note, 127);
     playing_note = 1;
 );
 
 note_list.length > 0 && t_beat >= slider(length_knob.slider_idx) * cycle_length && playing_note ? (
-    midisend(sample_position, NOTE_OFF, note_list[current_note_idx], 127);
+    midisend(sample_position, NOTE_OFF, current_note, 127);
     playing_note = 0;
 );
 

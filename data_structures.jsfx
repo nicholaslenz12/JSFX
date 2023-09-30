@@ -67,3 +67,48 @@ function sort() local(sorted, n, temp, flips) (
         sorted = flips == 0;
     );
 );
+
+function min() local(i, m, n) (
+    m = this[0];
+
+    i = 0;
+    n = 1;
+    loop(this.length-1,
+        this[n] < m ? (
+            m = this[n];
+            i = n;
+        );
+        n += 1;
+    );
+
+    m;
+);
+
+function end() (
+    this + max(this.length - 1, 0);
+);
+
+function clear() (
+    this.length = 0;
+);
+
+// Alternative to using this is just to keep a sorted version that we generate
+// during the MIDI receive block
+// Be careful since this is not thread-safe with respect to `this`
+// This is a bit complicated
+function find_larger_cyclic(val) local(n, ret, idx) (
+    n = 0;
+    larger_than = this.end() + 1; // align memory to just after `this`
+
+    loop(this.length,
+        this[n] > val ? (
+            larger_than.push(this[n]);
+        );
+        n += 1;
+    );
+
+    ret = larger_than.length == 0 ? this.min() : larger_than.min();
+    larger_than.clear();
+
+    ret;
+);
