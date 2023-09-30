@@ -24,6 +24,8 @@ out_pin:none
 // INIT
 // ----------------------------------------------------------------------------
 @init
+__RUN_TESTS__ ? run_tests();
+
 gfx_ext_retina = 1;
 
 background.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
@@ -139,6 +141,5 @@ length_knob.knob_detect_reset();
 length_knob.knob_detect_drag();
 length_knob.knob_update_slider(0.01);
 
-PROG_STATE != GOOD ? (
-    gfx_drawstr("BAD BAD BAD!");
-);
+__PROG_STATE__   != GOOD ? gfx_drawstr("BAD PROG STATE");
+__TEST_RESULTS__ != GOOD ? gfx_drawstr("TEST REGRESSION");

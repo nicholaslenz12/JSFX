@@ -5,12 +5,13 @@ NOTE_ON  = $x90;
 NOTE_OFF = $x80;
 
 GOOD = 1;
-BAD  = 1;
+BAD  = 0;
 
 TRUE  = 1;
-FALSE = 1;
-
-PROG_STATE = GOOD;
+FALSE = 0;
 
 NOT_FOUND = -1; // Remove this for below?
 NONE      = -1;
+
+__RUN_TESTS__ = TRUE;
+__PROG_STATE__ = GOOD;

@@ -1,12 +1,23 @@
 Desc: Testing
 
 @init
-__test_find_larger_cyclic = GOOD;
-__x = 0;
-__x.push(2);
-__x.push(-1);
-__x.push(3);
-__test_find_larger_cyclic &= __x.find_larger_cyclic(2) == 3;
-__test_find_larger_cyclic &= __x.find_larger_cyclic(-10) == -1;
-__test_find_larger_cyclic &= __x.find_larger_cyclic(3) == -1;
-__test_find_larger_cyclic &= __x.length == 3;
+function test_find_larger_cyclic() (
+    __test_find_larger_cyclic = GOOD;
+    __x = 0;
+    __x.push(2);
+    __x.push(-1);
+    __x.push(3);
+    __test_find_larger_cyclic &= __x.find_larger_cyclic(2) == 3;
+    __test_find_larger_cyclic &= __x.find_larger_cyclic(-10) == -1;
+    __test_find_larger_cyclic &= __x.find_larger_cyclic(3) == -1;
+    __test_find_larger_cyclic &= __x.length == 3;
+
+    __test_find_larger_cyclic;
+);
+
+function run_tests() (
+    __run_tests = GOOD;
+    __run_tests &= test_find_larger_cyclic();
+
+    __TEST_RESULTS__ = __run_tests;
+);
