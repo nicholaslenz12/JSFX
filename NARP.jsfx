@@ -6,6 +6,7 @@ import shapes.jsfx
 import math.jsfx
 import defines.jsfx
 import data_structures.jsfx
+import testing.jsfx
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
@@ -51,12 +52,6 @@ note_on_count = 1;
 note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
 current_note_idx = -1;
 playing_note = 0;
-
-// x__ = 0;
-// x__.push(2);
-// x__.push(-1);
-// x__.push(3);
-// x____ = x__.find_larger_cyclic(3);
 
 // ----------------------------------------------------------------------------
 // SLIDER
