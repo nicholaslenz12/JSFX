@@ -16,6 +16,7 @@ import states.jsfx
 slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
 slider3:1<0,1,1{Up,Down}>Direction
+slider4:1<0,1,1{Up,Down}>Direction
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -31,6 +32,16 @@ __RUN_TESTS__ ? run_tests();
 
 gfx_ext_retina = 1;
 
+function check_hover() (
+    this.type == BUTTON ? (
+        this.check_in_rect();
+    ) : (this.type == KNOB) ? (
+        this.check_in_circle();
+    ) : (
+        __PROG_STATE__ = BAD;
+    );
+);
+
 BACKGROUND.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
 // Nice if we can do this more programmatically
@@ -41,6 +52,7 @@ rate_knob.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 rate_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 rate_knob.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 rate_knob.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+rate_knob.hover_text = "Inverse notes per beat.";
 
 length_knob.knob_create(0.5, 0.18, 0.08, 0.01, 1, 1, 2);
 length_knob.font.font_create(1, "Arial", 0.04);
@@ -49,22 +61,25 @@ length_knob.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 length_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 length_knob.colors.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
 length_knob.colors_hover.color_create(GORANGE.r, GORANGE.g, GORANGE.b);
+length_knob.hover_text = "MIDI note duration.";
 
 button_up.button_create(0.7, 0.15, 0.2, 0.12, 3);
 button_up.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 button_up.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
-button_up.colors_clicked.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
+button_up.colors_clicked.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 button_up.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
 button_up.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 button_up.formatter.formatter_create("", "", "");
+button_up.hover_text = "Notes play up.";
 
 button_down.button_create(0.7, 0.3, 0.2, 0.12, 3);
 button_down.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 button_down.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
-button_down.colors_clicked.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
+button_down.colors_clicked.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 button_down.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
 button_down.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 button_down.formatter.formatter_create("", "", "");
+button_down.hover_text = "Notes play down.";
 
 t_beat = 0;
 
@@ -151,6 +166,8 @@ sample_position += 1;
 BACKGROUND.gfx_colors_from_color();
 gfx_rect(0, 0, gfx_w, gfx_h);
 
+// gfx_a = 0.3;
+
 rate_knob.knob_draw();
 rate_knob.knob_detect_reset();
 rate_knob.check_focus() ? (
@@ -171,13 +188,30 @@ old_slider = slider3;
 
 button_up.button_detect_click(0);
 button_down.button_detect_click(1);
+
 button_up.button_update_slider(old_slider, 0);
 button_down.button_update_slider(old_slider, 1);
+
 button_up.button_draw();
 button_down.button_draw();
-// button_up.button_draw_arrows(315);
-// button_down.button_draw_arrows(45);
-button_up.button_draw_rect();
+
+button_up.button_draw_up_rect();
+button_down.button_draw_down_rect();
+
+// gfx_a = 1;
+// SIGHTORANGE.gfx_colors_from_color();
+// gfx_rect(200, 200, 800, 600);
+
+#hover_text = "";
+rate_knob.check_hover() ? #hover_text = rate_knob.hover_text;
+length_knob.check_hover() ? #hover_text = length_knob.hover_text;
+button_up.check_hover() ? #hover_text = button_up.hover_text;
+button_down.check_hover() ? #hover_text = button_down.hover_text;
+hover.font_create(1, "Arial", 0.032);
+hover.set_from_font();
+gfx_x = gfx_w * 0.015;
+gfx_y = gfx_h * 0.95;
+gfx_drawstr(#hover_text);
 
 __PROG_STATE__   != GOOD ? gfx_drawstr("BAD PROG STATE");
 __TEST_RESULTS__ != GOOD ? gfx_drawstr("TEST REGRESSION");

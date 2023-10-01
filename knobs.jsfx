@@ -31,6 +31,7 @@ function knob_create(x, y, r, min_val, max_val, init_val, slider_idx) (
     this.slider_idx = slider_idx;
     this.obj_id = __OBJ_COUNT__;
     __OBJ_COUNT__ += 1;
+    this.type = KNOB;
 );
 
 // normalize mouse position instead?

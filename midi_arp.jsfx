@@ -1,0 +1,151 @@
+desc: MIDI Arpeggiator (N-mod)
+//tags: MIDI processing
+
+slider1:1<0.0,16,0.25>Rate (x BPM)
+slider2:1<0.01,1,0.01>Note Length
+slider3:0<0,3,1{Down,Up,Down Alt,Up Alt}>Mode
+slider4:0<0,3,1>Number Of Variants
+slider5:0<-64,64,1>Variant 1
+slider6:0<-64,64,1>Variant 2
+slider7:0<-64,64,1>Variant 3
+slider8:127<0,127,1>Velocity (0=use played velocity)
+
+in_pin:none
+out_pin:none
+
+@init
+notelist = 0;
+notecount  = 0;
+current = -1;
+
+pbcyclepos  = 0;
+pbnotekey = 0;
+
+// -----------------------------------------------------------------------------
+// SLIDER
+// -----------------------------------------------------------------------------
+@slider
+rate    = slider1;
+notelen = slider2;
+notelen < 0 ? notelen = 0 : notelen > 1 ? notelen = 1;
+notedir = (slider3 & 1) ? 1 : -1;
+directalt =  slider3 & 2;
+numvars = slider4;
+var1    = slider5;
+var2    = slider6;
+var3    = slider7;
+velmode = slider8;
+
+NOTE_ON   = 9 * 16;
+NOTE_OFF  = 8 * 16;
+CMD_MASK  = 240;
+KEY_MASK  = 127;
+VEL_SCALE = 256;
+
+// -----------------------------------------------------------------------------
+// BLOCK
+// -----------------------------------------------------------------------------
+@block
+currentcount = notecount;
+while (midirecv(offset, msg1, msg23)) (
+    // mask MIDI message to get commmand and key (note / pitch)
+    m    = msg1  & CMD_MASK;
+    note = msg23 & KEY_MASK;
+
+    // If it's a note on and it has velocity (new incoming note)
+    (m == NOTE_ON && msg23 >= VEL_SCALE) ? (
+        // If it's not yet in our note list
+        notelist[note] < 0.001 ? (
+            // Add it to the list with the "correct" velocity
+            // Increase size of note list
+            notelist[note] = velmode ? velmode : ((msg23 / VEL_SCALE));
+            notecount += 1;
+        );
+    // If it's a note off, or it's a note on and the velocity is zero
+    ) : (m == NOTE_OFF || m == NOTE_ON) ? (
+        // If note for the current message is in our note list
+        notelist[note] > 0.001 ? (
+            // And it is the currently played note
+            // Turn it off, then set our current note to nothing
+            current == note ? (
+                midisend(offset, NOTE_OFF, note);
+                current = -1;
+            );
+            // Either way, we should reduce the number of total notes in our list
+            // And remove that note from the note list
+            notecount -= 1;
+            notelist[note] = 0.0;
+        );
+    ) : (
+        // Other type of MIDI, passthrough
+        midisend(offset, msg1, msg23);
+    );
+);
+
+// If our note list is empty, but current is not zero (playing), kill it
+notecount < 1 && current >= 0 ? (
+    midisend(0, NOTE_OFF, current); // send note off
+    current = -1;
+);
+
+// Counter for sample number in @block
+// Musical increment per sample so we know when to retrigger as fraction of BPM
+sample_position = 0;
+cycle_rate = (1/srate) * (tempo/60) * rate;
+
+// If we have notes in our list, but we don't have any notes playing yet
+// as of the start of the block (before @sample)
+// set pbcyclepos == 1 (this will trigger a note on)
+// reset pbnotekey to 0, so that it restart it's cycle up/down the keyboard
+// pbvarstage to somthing big, effective "finished" with the variation until
+// a new note from the note list is used for the current note
+notecount > 0 && currentcount == 0 ? (
+    pbcyclepos = 1;
+    pbnotekey  = 0;
+);
+
+// -----------------------------------------------------------------------------
+// SAMPLE
+// -----------------------------------------------------------------------------
+@sample
+// increment musically
+pbcyclepos += cycle_rate;
+
+// If we have notes, and we finished playing the length of the note
+notecount > 0 && pbcyclepos >= notelen ? (
+    // If there actually is a note being played (do we need this?)
+    // Kill the note, and set current to "off"
+    current >= 0 ? (
+        midisend(sample_position, NOTE_OFF, current); // send note off
+        current = -1;
+    );
+);
+
+// If we have notes, and we are ready to play a new note musically in time
+notecount > 0 && pbcyclepos >= 1.0 ? (
+    // reset musical time
+    pbcyclepos -= 1;
+    // calc new current
+    !directalt ? (
+        // next note
+        count = 0;
+        while (count < 128) (
+            // find next note to play
+            // set that as last note
+            // play out note
+            // break
+            count += 1;
+            pbnotekey += notedir;
+            pbnotekey > 127 ? pbnotekey = 0 : pbnotekey < 0 ? pbnotekey = 127;
+            notelist[pbnotekey] > 0.001 ? (
+                pbnotekey >= 0 && pbnotekey < 128 ? (
+                    current = pbnotekey;
+                    midisend(sample_position, NOTE_ON, current + notelist[pbnotekey] * VEL_SCALE); // send note on
+                );
+                count = 1000; // break
+            );
+        );
+    );
+);
+
+sample_position += 1;
