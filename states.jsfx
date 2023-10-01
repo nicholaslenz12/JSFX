@@ -1,0 +1,11 @@
+Desc:States
+
+import defines.jsfx
+
+@init
+__LAFT_FOCUSED__ = NONE;
+__OBJ_COUNT__ = 0;
+
+function check_focus() (
+    __LAFT_FOCUSED__ == this.obj_id || __LAFT_FOCUSED__ == NONE;
+);

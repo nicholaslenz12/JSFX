@@ -7,6 +7,8 @@ import math.jsfx
 import defines.jsfx
 import data_structures.jsfx
 import testing.jsfx
+import buttons.jsfx
+import states.jsfx
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
@@ -29,8 +31,9 @@ __RUN_TESTS__ ? run_tests();
 
 gfx_ext_retina = 1;
 
-background.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+BACKGROUND.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
+// Nice if we can do this more programmatically
 rate_knob.knob_create(1/2, 1/2, 1/5, 0, 5, 3, 1);
 rate_knob.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
 rate_knob.formatter.formatter_create("1/%d", "Power", "");
@@ -39,13 +42,29 @@ rate_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 rate_knob.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 rate_knob.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
 
-length_knob.knob_create(0.65, 0.75, 0.10, 0.01, 1, 1, 2);
-length_knob.font.font_create(1, "Arial", 0.05);
+length_knob.knob_create(0.5, 0.18, 0.08, 0.01, 1, 1, 2);
+length_knob.font.font_create(1, "Arial", 0.04);
 length_knob.formatter.formatter_create("%0.2f", "Direct", "Length");
 length_knob.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 length_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 length_knob.colors.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
 length_knob.colors_hover.color_create(GORANGE.r, GORANGE.g, GORANGE.b);
+
+button_up.button_create(0.7, 0.15, 0.2, 0.12, 3);
+button_up.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+button_up.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_up.colors_clicked.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
+button_up.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
+button_up.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+button_up.formatter.formatter_create("", "", "");
+
+button_down.button_create(0.7, 0.3, 0.2, 0.12, 3);
+button_down.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+button_down.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_down.colors_clicked.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
+button_down.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
+button_down.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+button_down.formatter.formatter_create("", "", "");
 
 t_beat = 0;
 
@@ -62,6 +81,8 @@ playing_note = 0;
 @slider
 rate_knob.knob_detect_slider();
 length_knob.knob_detect_slider();
+button_up.button_detect_slider(0);
+button_down.button_detect_slider(1);
 
 // ----------------------------------------------------------------------------
 // BLOCK
@@ -127,20 +148,36 @@ sample_position += 1;
 // ----------------------------------------------------------------------------
 @gfx 624 395
 
-background.gfx_colors_from_color();
+BACKGROUND.gfx_colors_from_color();
 gfx_rect(0, 0, gfx_w, gfx_h);
 
 rate_knob.knob_draw();
 rate_knob.knob_detect_reset();
-rate_knob.knob_detect_drag();
+rate_knob.check_focus() ? (
+    rate_knob.knob_detect_drag();
+);
 rate_knob.knob_update_slider(1);
 rate_knob.knob_draw_arrows();
 // sliderchange(slider1);
 
 length_knob.knob_draw();
 length_knob.knob_detect_reset();
-length_knob.knob_detect_drag();
+length_knob.check_focus() ? (
+    length_knob.knob_detect_drag();
+);
 length_knob.knob_update_slider(0.01);
+
+old_slider = slider3;
+
+button_up.button_detect_click(0);
+button_down.button_detect_click(1);
+button_up.button_update_slider(old_slider, 0);
+button_down.button_update_slider(old_slider, 1);
+button_up.button_draw();
+button_down.button_draw();
+// button_up.button_draw_arrows(315);
+// button_down.button_draw_arrows(45);
+button_up.button_draw_rect();
 
 __PROG_STATE__   != GOOD ? gfx_drawstr("BAD PROG STATE");
 __TEST_RESULTS__ != GOOD ? gfx_drawstr("TEST REGRESSION");

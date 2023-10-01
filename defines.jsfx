@@ -13,8 +13,13 @@ FALSE = 0;
 FORWARD  = 1;
 BACKWARD = -1;
 
+ON = 1;
+OFF = 0;
+
 NOT_FOUND = -1; // Remove this for below?
 NONE      = -1;
 
 __RUN_TESTS__ = TRUE;
 __PROG_STATE__ = GOOD;
+
+LEFT_MOUSE = 1;
