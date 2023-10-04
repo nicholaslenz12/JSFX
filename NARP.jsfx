@@ -15,8 +15,8 @@ import states.jsfx
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
-slider3:0<0,1,1{Up,Down}>Direction
-slider4:0<0,2,1{Straight,Dotted,Triplet}>Note Modifier
+slider3:0<0,1,1{Up,Down}>-Direction
+slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -140,12 +140,13 @@ note_list.length == 0 && current_note != NONE ? (
 
 // can we do this elsewhere?
 beat_fraction = 2 ^ -slider(rate_knob.slider_idx);
-cycle_rate = 1/srate * tempo/60 / beat_fraction / 4;
+note_mod = slider4 == 0 ? 1 : slider4 == 1 ? 3 / 2 : 2 / 3;
+cycle_rate = 1/srate * tempo/60 / beat_fraction / 4 / note_mod;
 sample_position = 0;
 
 // Just starting, so start playout of next note immediately
 note_list.length > 0 && prev_list_len == 0 ? (
-    t_beat = mod_pos(beat_position, (4*beat_fraction)) / (4*beat_fraction);
+    t_beat = mod_pos(beat_position, (4*beat_fraction*note_mod)) / (4*beat_fraction*note_mod);
     play_immediately = 1;
     prev_note_ons = 1;
 );
