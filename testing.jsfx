@@ -17,12 +17,67 @@ function test_find_next_cyclic() (
     __test_find_next_cyclic &= __x.find_next_cyclic(3, BACKWARD) == 2;
     __test_find_next_cyclic &= __x.length == 3;
 
+    __x.clear();
     __test_find_next_cyclic;
+);
+
+function test_copy() (
+    __test_copy = GOOD;
+    __x = 0;
+    __x.push(2);
+    __x.push(-1);
+    __x.push(3);
+
+    __y = 10;
+    __y.copy(__x + 1, __x.length - 1);
+    __test_copy &= __y.length == 2;
+    __test_copy &= __y[0] == -1;
+    __test_copy &= __y[1] == 3;
+
+    __x.clear();
+    __y.clear();
+
+    __test_copy;
+);
+
+function test_root_descend() local(n) (
+    __test_root_descend = GOOD;
+    __x = 0;
+    __x.push(1);
+    __x.push(2);
+    __x.push(3);
+    __x.push(4);
+
+    cur = NONE;
+
+    // test vec
+    data = 100;
+    data[0] = 1;
+    data[1] = 4;
+    data[2] = 1;
+    data[3] = 3;
+    data[4] = 1;
+    data[5] = 2;
+    data[6] = 1;
+    data[7] = 4;
+
+    n = 0;
+    loop(8,
+        old_cur = cur;
+        cur = __x.root_descend(cur, prev);
+        __test_root_descend &= cur == data[n];
+        prev = old_cur;
+        n += 1;
+    );
+    
+    __test_root_descend;
 );
 
 function run_tests() (
     __run_tests = GOOD;
     __run_tests &= test_find_next_cyclic();
+    __run_tests &= test_copy();
+    __run_tests &= test_root_descend();
 
     __TEST_RESULTS__ = __run_tests;
 );

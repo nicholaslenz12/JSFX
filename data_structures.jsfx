@@ -102,6 +102,13 @@ function clear() (
     this.length = 0;
 );
 
+// assumes the memory that's being written into doesn't conflict with any
+// existing arrays
+function copy(address, length) (
+    this.length = length;
+    memcpy(this, address, length);
+);
+
 // Alternative to using this is just to keep a sorted version that we generate
 // during the MIDI receive block
 // Be careful since this is not thread-safe with respect to `this`
@@ -124,6 +131,25 @@ function find_next_cyclic(val, direction) local(n, ret, idx, found) (
         ret = potential_next.length == 0 ? this.max() : potential_next.max();
     );
     potential_next.clear();
+
+    ret;
+);
+
+// Alternate between the lowest note in the array, and the next highest note
+// Need to know previous to last note too
+function root_descend(cur, prev) local(ret) (
+    // If the current note is not the root play the root
+    // Otherwise, find_next_cyclic reversed, with the previous to last not as val,
+    // But excluding the root in that list
+    cur != this.min() ? (
+        ret = this.min();
+    ) : (
+        // we can avoid the copy here
+        potential_next_ = this.end() + 1;
+        potential_next_.copy(this + 1, this.length - 1); // 1 means exclude the root
+        ret = potential_next_.find_next_cyclic(prev, BACKWARD);
+        potential_next_.clear();
+    );
 
     ret;
 );
