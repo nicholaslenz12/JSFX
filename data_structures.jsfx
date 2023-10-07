@@ -172,3 +172,9 @@ function up_down(cur, prev, start) local(ret, direction) (
 
     ret;
 );
+
+// Get random element from
+// Try with LCG to be deterministic
+function rand_element() (
+    this[rand(this.length - 1)];
+);

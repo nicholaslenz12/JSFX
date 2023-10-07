@@ -15,7 +15,7 @@ import states.jsfx
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
-slider3:0<0,4,1{Up,Down,Root Descend, Up Down, Down Up}>Direction
+slider3:0<0,5,1{Up,Down,Root Descend, Up Down, Down Up, Random}>Direction
 slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
 
 // ----------------------------------------------------------------------------
@@ -171,17 +171,13 @@ note_list.length > 0 && (t_beat >= 1 || play_immediately) && !playing_note ? (
     // clean this up
     // - always track cur/prev
     // have slider3 == <beahve> format line-by-line
-    slider3 == 0 || slider3 == 1 ? (
-        current_note = note_list.find_next_cyclic(current_note, slider3 == 0 ? FORWARD : BACKWARD);
-    ) : (
-        old_current = current_note;
-        slider3 == 2 ? (
-            current_note = note_list.root_descend(current_note, previous_note);
-        ) : (
-            current_note = note_list.up_down(current_note, previous_note, slider3 == 3 ? FORWARD : BACKWARD);
-        );
-        previous_note = old_current;
-    );
+    old_current = current_note;
+    slider3 == 0 ? current_note = note_list.find_next_cyclic(current_note, FORWARD);
+    slider3 == 1 ? current_note = note_list.find_next_cyclic(current_note, BACKWARD);
+    slider3 == 2 ? current_note = note_list.root_descend(current_note, previous_note);
+    slider3 == 3 ? current_note = note_list.up_down(current_note, previous_note, FORWARD);
+    slider3 == 4 ? current_note = note_list.up_down(current_note, previous_note, BACKWARD);
+    previous_note = old_current;
     midisend(sample_position, NOTE_ON, current_note, 127);
     playing_note = 1;
     play_immediately = 0;
@@ -263,6 +259,9 @@ rate_knob.check_hover() ? #hover_text = rate_knob.hover_text;
 length_knob.check_hover() ? #hover_text = length_knob.hover_text;
 button_up.check_hover() ? #hover_text = button_up.hover_text;
 button_down.check_hover() ? #hover_text = button_down.hover_text;
+button_descend.check_hover() ? #hover_text = button_descend.hover_text;
+button_up_down.check_hover() ? #hover_text = button_up_down.hover_text;
+button_down_up.check_hover() ? #hover_text = button_down_up.hover_text;
 hover.font_create(1, "Arial", 0.032);
 hover.set_from_font();
 gfx_x = gfx_w * 0.015;
