@@ -69,8 +69,45 @@ function test_root_descend() local(n) (
         prev = old_cur;
         n += 1;
     );
-    
+
+    data.clear();
+    __x.clear();
     __test_root_descend;
+);
+
+function test_up_down() local(n) (
+    __test_up_down = GOOD;
+    __x = 0;
+    __x.push(1);
+    __x.push(2);
+    __x.push(3);
+    __x.push(4);
+
+    cur = NONE;
+
+    // test vec
+    data = 100;
+    data[0] = 1;
+    data[1] = 2;
+    data[2] = 3;
+    data[3] = 4;
+    data[4] = 3;
+    data[5] = 2;
+    data[6] = 1;
+    data[7] = 2;
+
+    n = 0;
+    loop(8,
+        old_cur = cur;
+        cur = __x.up_down(cur, prev, FORWARD);
+        __test_up_down &= cur == data[n];
+        prev = old_cur;
+        n += 1;
+    );
+
+    data.clear();
+    __x.clear();
+    __test_up_down;
 );
 
 function run_tests() (
@@ -78,6 +115,7 @@ function run_tests() (
     __run_tests &= test_find_next_cyclic();
     __run_tests &= test_copy();
     __run_tests &= test_root_descend();
+    __run_tests &= test_up_down();
 
     __TEST_RESULTS__ = __run_tests;
 );

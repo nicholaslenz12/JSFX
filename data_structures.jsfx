@@ -153,3 +153,22 @@ function root_descend(cur, prev) local(ret) (
 
     ret;
 );
+
+// Up-down
+// Need to know previous to last note too
+function up_down(cur, prev, start) local(ret, direction) (
+    // Find next cylic (or implement non-cyclic find)
+    // If reached end and cycle around, then reverse direction
+    cur == NONE ? (
+        direction = start;
+    ) : (cur > prev) ? (
+        direction = FORWARD;
+    ) : (
+        direction = BACKWARD;
+    );
+    ret = this.find_next_cyclic(cur, direction);
+    direction == FORWARD  && cur == this.max() ? ret = this.find_next_cyclic(cur, BACKWARD); // hit top
+    direction == BACKWARD && cur == this.min() ? ret = this.find_next_cyclic(cur, FORWARD);  // hit bottom
+
+    ret;
+);

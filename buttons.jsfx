@@ -22,6 +22,12 @@ function button_create(x, y, w, h, slider_idx) (
     this.obj_id = __OBJ_COUNT__;
     __OBJ_COUNT__ += 1;
     this.type = BUTTON;
+
+    this.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+    this.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+    this.colors_clicked.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+    this.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
+    this.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 );
 
 // normalize mouse position instead?

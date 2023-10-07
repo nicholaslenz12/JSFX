@@ -15,7 +15,7 @@ import states.jsfx
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
-slider3:0<0,2,1{Up,Down,Root Descend}>Direction
+slider3:0<0,4,1{Up,Down,Root Descend, Up Down, Down Up}>Direction
 slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
 
 // ----------------------------------------------------------------------------
@@ -64,32 +64,26 @@ length_knob.colors_hover.color_create(GORANGE.r, GORANGE.g, GORANGE.b);
 length_knob.hover_text = "MIDI note duration.";
 
 // ARP DIRECTIONS ----
-button_up.button_create(0.75, 0.1, 0.165, 0.12, 3);
-button_up.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
-button_up.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
-button_up.colors_clicked.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
-button_up.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
-button_up.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+button_up.button_create(0.1, 0.1, 0.165, 0.12, 3);
 button_up.formatter.formatter_create("", "", "");
 button_up.hover_text = "Notes play up.";
 
-button_down.button_create(0.75, 0.26, 0.165, 0.12, 3);
-button_down.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
-button_down.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
-button_down.colors_clicked.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
-button_down.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
-button_down.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+button_down.button_create(0.1, 0.26, 0.165, 0.12, 3);
 button_down.formatter.formatter_create("", "", "");
 button_down.hover_text = "Notes play down.";
 
-button_descend.button_create(0.75, 0.42, 0.165, 0.12, 3);
-button_descend.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
-button_descend.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
-button_descend.colors_clicked.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
-button_descend.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
-button_descend.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+button_up_down.button_create(0.1, 0.42, 0.165, 0.12, 3);
+button_up_down.formatter.formatter_create("", "", "");
+button_up_down.hover_text = "Notes play up, then down.";
+
+button_down_up.button_create(0.1, 0.58, 0.165, 0.12, 3);
+button_down_up.formatter.formatter_create("", "", "");
+button_down_up.hover_text = "Notes play down, then up.";
+
+button_descend.button_create(0.75, 0.1, 0.165, 0.12, 3);
 button_descend.formatter.formatter_create("", "", "");
-button_descend.hover_text = "Notes play down.";
+button_descend.hover_text = "Notes play descending to root.";
+
 
 // NOTE MODIFIERS ----
 button_straight.button_create(0.44, 0.8, 0.12, 0.12, 4);
@@ -105,8 +99,11 @@ prev_note_ons = 0;
 note_on_count = 1;
 
 note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
-current_note_idx = -1;
 playing_note = 0;
+
+first = 0;
+current_note  = NONE;
+previous_note = NONE;
 
 // ----------------------------------------------------------------------------
 // SLIDER
@@ -117,6 +114,8 @@ length_knob.knob_detect_slider();
 button_up.button_detect_slider(0);
 button_down.button_detect_slider(1);
 button_descend.button_detect_slider(2);
+button_up_down.button_detect_slider(3);
+button_down_up.button_detect_slider(4);
 button_straight.button_detect_slider(0);
 button_dotted.button_detect_slider(1);
 button_triplet.button_detect_slider(2);
@@ -169,11 +168,18 @@ t_beat += cycle_rate;
 
 note_list.length > 0 && (t_beat >= 1 || play_immediately) && !playing_note ? (
     !play_immediately ? t_beat -= 1;
+    // clean this up
+    // - always track cur/prev
+    // have slider3 == <beahve> format line-by-line
     slider3 == 0 || slider3 == 1 ? (
         current_note = note_list.find_next_cyclic(current_note, slider3 == 0 ? FORWARD : BACKWARD);
     ) : (
         old_current = current_note;
-        current_note = note_list.root_descend(current_note, previous_note);
+        slider3 == 2 ? (
+            current_note = note_list.root_descend(current_note, previous_note);
+        ) : (
+            current_note = note_list.up_down(current_note, previous_note, slider3 == 3 ? FORWARD : BACKWARD);
+        );
         previous_note = old_current;
     );
     midisend(sample_position, NOTE_ON, current_note, 127);
@@ -217,12 +223,21 @@ old_slider = slider3;
 button_up.button_detect_click(0);
 button_down.button_detect_click(1);
 button_descend.button_detect_click(2);
+button_up_down.button_detect_click(3);
+button_down_up.button_detect_click(4);
+
 button_up.button_update_slider(old_slider, 0);
 button_down.button_update_slider(old_slider, 1);
 button_descend.button_update_slider(old_slider, 2);
+button_up_down.button_update_slider(old_slider, 3);
+button_down_up.button_update_slider(old_slider, 4);
+
 button_up.button_draw();
 button_down.button_draw();
 button_descend.button_draw();
+button_up_down.button_draw();
+button_down_up.button_draw();
+
 button_up.button_draw_up_rect();
 button_down.button_draw_down_rect();
 
