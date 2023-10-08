@@ -24,8 +24,8 @@ function button_create(x, y, w, h, slider_idx) (
     this.type = BUTTON;
 
     this.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
-    this.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
-    this.colors_clicked.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+    this.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+    this.colors_clicked.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
     this.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
     this.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 );
@@ -63,11 +63,16 @@ function button_draw() local(x, y, w, h, x_, y_, w_, h_) (
     this.clicked ? (
         this.colors_clicked.gfx_colors_from_color();
         gfx_rect(x_, y_, w_, h_);
+    );
+    this.check_in_rect() ? (
         this.colors_shapes.gfx_colors_from_color();
-        draw_arrow(x + 1.1 * w, y + 0.5 * h, 0, 0.04, 180, 0.4);
-    ) : (this.check_in_rect()) ? (
-        this.colors_hover.gfx_colors_from_color();
-        gfx_rect(x_, y_, w_, h_);
+        this.hover_arrow_side == "Right" ? ( // TODO: map case to lower
+            draw_arrow(x + 1.1 * w, y + 0.5 * h, 0, 0.04, 180, 0.4);
+        ) : (this.hover_arrow_side == "Top") ? (
+            draw_arrow(x + 0.5 * w, y - 0.1 * h, 0, 0.04, 90, 0.4);
+        ): ( // Left
+            draw_arrow(x - 0.1 * w, y + 0.5 * h, 0, 0.04, 0, 0.4);
+        );
     );
 
     this.colors_font.gfx_colors_from_color();

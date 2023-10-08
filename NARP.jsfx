@@ -15,7 +15,7 @@ import states.jsfx
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1, 1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
-slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>Direction
+slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>Play Style
 slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
 
 // ----------------------------------------------------------------------------
@@ -67,43 +67,53 @@ length_knob.hover_text = "MIDI note duration.";
 button_up.button_create(0.1, 0.1, 0.165, 0.12, 3);
 button_up.formatter.formatter_create("", "", "");
 button_up.hover_text = "Notes play up.";
+button_up.hover_arrow_side = "Left";
 
 button_down.button_create(0.1, 0.26, 0.165, 0.12, 3);
 button_down.formatter.formatter_create("", "", "");
 button_down.hover_text = "Notes play down.";
+button_down.hover_arrow_side = "Left";
 
 button_up_down.button_create(0.1, 0.42, 0.165, 0.12, 3);
 button_up_down.formatter.formatter_create("", "", "");
 button_up_down.hover_text = "Notes play up, then down.";
+button_up_down.hover_arrow_side = "Left";
 
 button_down_up.button_create(0.1, 0.58, 0.165, 0.12, 3);
 button_down_up.formatter.formatter_create("", "", "");
 button_down_up.hover_text = "Notes play down, then up.";
+button_down_up.hover_arrow_side = "Left";
 
 button_descend.button_create(0.75, 0.1, 0.165, 0.12, 3);
 button_descend.formatter.formatter_create("", "", "");
 button_descend.hover_text = "Notes play descending to root.";
+button_descend.hover_arrow_side = "Right";
 
 button_random.button_create(0.75, 0.26, 0.165, 0.12, 3);
 button_random.formatter.formatter_create("", "", "");
 button_random.hover_text = "Notes play randomly.";
+button_random.hover_arrow_side = "Right";
 
 button_asplayed.button_create(0.75, 0.42, 0.165, 0.12, 3);
 button_asplayed.formatter.formatter_create("", "", "");
 button_asplayed.hover_text = "Plays in order notes are entered.";
+button_asplayed.hover_arrow_side = "Right";
 
 button_chord.button_create(0.75, 0.58, 0.165, 0.12, 3);
 button_chord.formatter.formatter_create("", "", "");
 button_chord.hover_text = "Plays chords.";
-
+button_chord.hover_arrow_side = "Right";
 
 // NOTE MODIFIERS ----
 button_straight.button_create(0.44, 0.8, 0.12, 0.12, 4);
 button_straight.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_straight.hover_arrow_side = "Top";
 button_dotted.button_create(  0.62, 0.8, 0.12, 0.12, 4);
 button_dotted.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_dotted.hover_arrow_side = "Top";
 button_triplet.button_create( 0.26, 0.8, 0.12, 0.12, 4);
 button_triplet.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_triplet.hover_arrow_side = "Top";
 
 t_beat = 0;
 
