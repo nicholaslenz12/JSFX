@@ -17,7 +17,7 @@ slider1:3<0,5,1{1/1, 1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
 slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>Play Style
 slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
-slider5:100<40,1000,1:log=100>Rate (Free)
+slider5:200<40,1000,1:log=100>Rate (Free)
 slider6:1<0,1,1{Free, Synced}>Sync Mode
 
 // ----------------------------------------------------------------------------
@@ -31,6 +31,7 @@ out_pin:none
 // ----------------------------------------------------------------------------
 @init
 __RUN_TESTS__ ? run_tests();
+// __DEBUG__ = FALSE;
 
 gfx_ext_retina = 1;
 
@@ -133,13 +134,9 @@ button_chord.hover_text = "Toggles between beat-synced and free modes.";
 
 t_beat = 0;
 
-prev_note_ons = 0;
-note_on_count = 1;
-
 note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
 playing_note = 0;
 
-first = 0;
 current_note  = NONE;
 previous_note = NONE;
 
@@ -172,6 +169,9 @@ button_sync_mode.button_detect_slider(1); // 1 -> "On"
 @block
 rate_mode = slider6;
 
+remove_count = 0;
+first = TRUE;
+first_offset = 0;
 prev_list_len = note_list.length;
 while (midirecv(offset, cmd, note, vel)) (
     cmd == NOTE_ON && vel > 0 ? ( // Add note to the note list
@@ -179,8 +179,16 @@ while (midirecv(offset, cmd, note, vel)) (
             note_list.push(note);
         );
     ) : (cmd == NOTE_OFF || cmd == NOTE_ON) ? ( // Remove note from note list, (kill note if being played)
-        note_list.contains(note) ? (
+        note_list.contains(note) ? ( // this is getting a bit hairy
             midisend(offset, NOTE_OFF, note);
+            first ? ( // track if all note offs happen at the same place
+                first_offset = offset;
+                remove_count += 1;
+            ) : (
+                offset == first_offset ? (
+                    remove_count += 1;
+                );
+            );
             current_note = NONE;
         );
         note_list.remove(note);
@@ -188,6 +196,8 @@ while (midirecv(offset, cmd, note, vel)) (
         midisend(offset, cmd, key, vel);
     );
 );
+hard_reset = remove_count == prev_list_len && prev_list_len > 0;
+hard_reset_offset = first_offset;
 
 // kill any dangling notes (risk of FLP error?)
 note_list.length == 0 && current_note != NONE ? (
@@ -213,7 +223,6 @@ note_list.length > 0 && prev_list_len == 0 ? (
         t_beat = 0;
     );
     play_immediately = 1;
-    prev_note_ons = 1;
 );
 
 // ----------------------------------------------------------------------------
@@ -222,11 +231,18 @@ note_list.length > 0 && prev_list_len == 0 ? (
 @sample
 t_beat += cycle_rate;
 
-note_list.length > 0 && (t_beat >= 1 || play_immediately) && !playing_note ? (
-    !play_immediately ? t_beat -= 1;
-    // clean this up
-    // - always track cur/prev
-    // have slider3 == <beahve> format line-by-line
+play_note_trigger  = t_beat >= 1 || play_immediately;
+hard_reset_trigger = sample_position == hard_reset_offset && hard_reset;
+// __DEBUG__ && sample_number == 96000 ? (
+//     ___play_note_trigger = play_note_trigger;
+//     ___hard_reset_trigger = hard_reset_trigger;
+//     ___playing_note = playing_note;
+//     ___note_list = note_list.length;
+// );
+note_list.length > 0 && (play_note_trigger && !playing_note) || hard_reset_trigger ? (
+    !play_immediately  ? t_beat -= 1;
+    hard_reset_trigger ? t_beat = cycle_rate; // why not 0? sketchy off by one possible here
+
     old_current = current_note;
     slider3 == 0 ? current_note = note_list.find_next_cyclic(current_note, FORWARD);
     slider3 == 1 ? current_note = note_list.find_next_cyclic(current_note, BACKWARD);
@@ -263,6 +279,7 @@ note_list.length > 0 && t_beat >= slider(length_knob.slider_idx) && playing_note
 );
 
 sample_position += 1;
+// __DEBUG__ && sample_number += 1;
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
