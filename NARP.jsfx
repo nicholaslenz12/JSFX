@@ -18,7 +18,7 @@ slider2:1<0.01,1,0.01>-Length
 slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>Play Style
 slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
 slider5:100<40,1000,1:log=100>Rate (Free)
-slider6:0<0,1,1{Synced, Free}>Sync Mode
+slider6:1<0,1,1{Free, Synced}>Sync Mode
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -126,6 +126,11 @@ button_triplet.button_create( 0.26, 0.8, 0.12, 0.12, 4);
 button_triplet.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
 button_triplet.hover_arrow_side = "Top";
 
+// Extras ----
+button_sync_mode.button_create(0.32, 0.075, 0.075, 0.075, 6);
+button_chord.formatter.formatter_create("", "", "");
+button_chord.hover_text = "Toggles between beat-synced and free modes.";
+
 t_beat = 0;
 
 prev_note_ons = 0;
@@ -159,6 +164,8 @@ button_straight.button_detect_slider(0);
 button_dotted.button_detect_slider(1);
 button_triplet.button_detect_slider(2);
 
+button_sync_mode.button_detect_slider(1); // 1 -> "On"
+
 // ----------------------------------------------------------------------------
 // BLOCK
 // ----------------------------------------------------------------------------
@@ -191,7 +198,7 @@ note_list.length == 0 && current_note != NONE ? (
 // can we do this elsewhere?
 beat_fraction = 2 ^ -slider(rate_knob.slider_idx);
 note_mod = slider4 == 0 ? 1 : slider4 == 1 ? 3 / 2 : 2 / 3;
-rate_mode == 0 ? ( // Sync / Free
+rate_mode == 1 ? ( // Free / Sync
     cycle_rate = 1/srate * tempo/60 / beat_fraction / 4 / note_mod;
 ) : (
     cycle_rate = 1/srate / (slider5 / 1000);
@@ -200,7 +207,7 @@ sample_position = 0;
 
 // Just starting, so start playout of next note immediately
 note_list.length > 0 && prev_list_len == 0 ? (
-    rate_mode == 0 ? ( // Sync / Free
+    rate_mode == 1 ? ( // Free / Sync
         t_beat = mod_pos(beat_position, (4*beat_fraction*note_mod)) / (4*beat_fraction*note_mod);
     ) : (
         t_beat = 0;
@@ -266,7 +273,7 @@ gfx_rect(0, 0, gfx_w, gfx_h);
 
 // gfx_a = 0.3;
 
-slider6 == 0 ? (
+slider6 == 1 ? (
     rate_knob.knob_draw();
     rate_knob.knob_detect_reset();
     rate_knob.check_focus() ? (
@@ -333,6 +340,11 @@ button_triplet.button_update_slider(old_slider, 2);
 button_straight.button_draw();
 button_dotted.button_draw();
 button_triplet.button_draw();
+
+old_slider = slider6;
+button_sync_mode.button_detect_click(slider6 == 0 ? 1 : 0); // set up toggle
+button_sync_mode.button_update_slider(old_slider, 1); // set up toggle
+button_sync_mode.button_draw();
 
 // gfx_a = 1;
 // SIGHTORANGE.gfx_colors_from_color();
