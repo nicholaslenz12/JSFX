@@ -1,6 +1,7 @@
 desc:Data Structures
 
 import defines.jsfx
+import math.jsfx
 
 @init
 // Array-like
@@ -137,6 +138,7 @@ function find_next_cyclic(val, direction) local(n, ret, idx, found) (
 
 // Alternate between the lowest note in the array, and the next highest note
 // Need to know previous to last note too
+// TODO: rename
 function root_descend(cur, prev) local(ret) (
     // If the current note is not the root play the root
     // Otherwise, find_next_cyclic reversed, with the previous to last not as val,
@@ -177,4 +179,8 @@ function up_down(cur, prev, start) local(ret, direction) (
 // Try with LCG to be deterministic
 function rand_element() (
     this[rand(this.length - 1)];
+);
+
+function find_next_by_idx(cur) ( // TODO rename
+    cur == NONE ? this[0] : this[mod_pos(this.find(cur) + 1, this.length)];
 );

@@ -110,12 +110,44 @@ function test_up_down() local(n) (
     __test_up_down;
 );
 
+function test_find_next_by_idx() local(n) (
+    __test_find_next_by_idx = GOOD;
+    __x = 0;
+    __x.push(4);
+    __x.push(7);
+    __x.push(8);
+    __x.push(1);
+
+    cur = NONE;
+
+    // test vec
+    data = 100;
+    data[0] = 4;
+    data[1] = 7;
+    data[2] = 8;
+    data[3] = 1;
+    data[4] = 4;
+
+    n = 0;
+    loop(5,
+        cur = __x.find_next_by_idx(cur);
+        __test_find_next_by_idx &= cur == data[n];
+        n == 0 ? __v = cur;
+        n += 1;
+    );
+
+    data.clear();
+    __x.clear();
+    __test_find_next_by_idx;
+);
+
 function run_tests() (
     __run_tests = GOOD;
     __run_tests &= test_find_next_cyclic();
     __run_tests &= test_copy();
     __run_tests &= test_root_descend();
     __run_tests &= test_up_down();
+    __run_tests &= test_find_next_by_idx();
 
     __TEST_RESULTS__ = __run_tests;
 );
