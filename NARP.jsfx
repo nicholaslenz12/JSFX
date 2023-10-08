@@ -15,7 +15,7 @@ import states.jsfx
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1, 1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
-slider3:0<0,6,1{Up, Down, Root Descend, Up Down, Down Up, Random, Chord, As Played}>Direction
+slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>Direction
 slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
 
 // ----------------------------------------------------------------------------
@@ -88,13 +88,14 @@ button_random.button_create(0.75, 0.26, 0.165, 0.12, 3);
 button_random.formatter.formatter_create("", "", "");
 button_random.hover_text = "Notes play randomly.";
 
-button_chord.button_create(0.75, 0.42, 0.165, 0.12, 3);
+button_asplayed.button_create(0.75, 0.42, 0.165, 0.12, 3);
+button_asplayed.formatter.formatter_create("", "", "");
+button_asplayed.hover_text = "Plays in order notes are entered.";
+
+button_chord.button_create(0.75, 0.58, 0.165, 0.12, 3);
 button_chord.formatter.formatter_create("", "", "");
 button_chord.hover_text = "Plays chords.";
 
-button_asplayed.button_create(0.75, 0.58, 0.165, 0.12, 3);
-button_asplayed.formatter.formatter_create("", "", "");
-button_asplayed.hover_text = "Plays in order notes are entered.";
 
 // NOTE MODIFIERS ----
 button_straight.button_create(0.44, 0.8, 0.12, 0.12, 4);
@@ -129,8 +130,8 @@ button_descend.button_detect_slider(2);
 button_up_down.button_detect_slider(3);
 button_down_up.button_detect_slider(4);
 button_random.button_detect_slider(5);
-button_chord.button_detect_slider(6);
-button_asplayed.button_detect_slider(7);
+button_asplayed.button_detect_slider(6);
+button_chord.button_detect_slider(7);
 
 button_straight.button_detect_slider(0);
 button_dotted.button_detect_slider(1);
@@ -194,9 +195,9 @@ note_list.length > 0 && (t_beat >= 1 || play_immediately) && !playing_note ? (
     slider3 == 3 ? current_note = note_list.up_down(current_note, previous_note, FORWARD);
     slider3 == 4 ? current_note = note_list.up_down(current_note, previous_note, BACKWARD);
     slider3 == 5 ? current_note = note_list.rand_element();
-    slider3 == 7 ? current_note = note_list.find_next_by_idx(current_note);
+    slider3 == 6 ? current_note = note_list.find_next_by_idx(current_note);
     previous_note = old_current;
-    slider3 == 6 ? (
+    slider3 == 7 ? (
         l = 0;
         loop(note_list.length,
             midisend(sample_position, NOTE_ON, note_list[l], 127);
@@ -210,7 +211,7 @@ note_list.length > 0 && (t_beat >= 1 || play_immediately) && !playing_note ? (
 );
 
 note_list.length > 0 && t_beat >= slider(length_knob.slider_idx) && playing_note ? (
-    slider3 == 6 ? (
+    slider3 == 7 ? (
         l = 0;
         loop(note_list.length,
             midisend(sample_position, NOTE_OFF, note_list[l], 127);
@@ -256,8 +257,8 @@ button_descend.button_detect_click(2);
 button_up_down.button_detect_click(3);
 button_down_up.button_detect_click(4);
 button_random.button_detect_click(5);
-button_chord.button_detect_click(6);
-button_asplayed.button_detect_click(7);
+button_asplayed.button_detect_click(6);
+button_chord.button_detect_click(7);
 
 button_up.button_update_slider(old_slider, 0);
 button_down.button_update_slider(old_slider, 1);
@@ -265,8 +266,8 @@ button_descend.button_update_slider(old_slider, 2);
 button_up_down.button_update_slider(old_slider, 3);
 button_down_up.button_update_slider(old_slider, 4);
 button_random.button_update_slider(old_slider, 5);
-button_chord.button_update_slider(old_slider, 6);
-button_asplayed.button_update_slider(old_slider, 7);
+button_asplayed.button_update_slider(old_slider, 6);
+button_chord.button_update_slider(old_slider, 7);
 
 button_up.button_draw();
 button_down.button_draw();
@@ -274,8 +275,8 @@ button_descend.button_draw();
 button_up_down.button_draw();
 button_down_up.button_draw();
 button_random.button_draw();
-button_chord.button_draw();
 button_asplayed.button_draw();
+button_chord.button_draw();
 
 button_up.button_draw_up_rect();
 button_down.button_draw_down_rect();
@@ -306,6 +307,8 @@ button_descend.check_hover() ? #hover_text = button_descend.hover_text;
 button_up_down.check_hover() ? #hover_text = button_up_down.hover_text;
 button_down_up.check_hover() ? #hover_text = button_down_up.hover_text;
 button_random.check_hover() ? #hover_text = button_random.hover_text;
+button_asplayed.check_hover() ? #hover_text = button_asplayed.hover_text;
+button_chord.check_hover() ? #hover_text = button_chord.hover_text;
 hover.font_create(1, "Arial", 0.032);
 hover.set_from_font();
 gfx_x = gfx_w * 0.015;
