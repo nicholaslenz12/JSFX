@@ -59,6 +59,7 @@ rate_knob.hover_text = "Inverse notes per beat.";
 
 rate_knob_free.knob_create(1/2, 0.4, 0.27, 40, 1000, 200, 5);
 rate_knob_free.font.font_create(1, "Arial", 0.15); // wrapper around gfx_setfont
+rate_knob_free.font_small.font_create(1, "Arial", 0.06); // wrapper around gfx_setfont
 rate_knob_free.formatter.formatter_create("%d", "Direct", "");
 rate_knob_free.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 rate_knob_free.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
@@ -306,6 +307,7 @@ slider6 == 1 ? (
     );
     rate_knob_free.knob_update_slider(1);
     rate_knob_free.knob_draw_arrows();
+    rate_knob_free.knob_draw_specification("ms");
 );
 
 length_knob.knob_draw();
