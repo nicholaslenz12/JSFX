@@ -129,8 +129,8 @@ button_triplet.hover_arrow_side = "Top";
 
 // Extras ----
 button_sync_mode.button_create(0.32, 0.075, 0.075, 0.075, 6);
-button_chord.formatter.formatter_create("", "", "");
-button_chord.hover_text = "Toggles between beat-synced and free modes.";
+button_sync_mode.formatter.formatter_create("", "", "");
+button_sync_mode.hover_text = "Toggles between beat-synced and free modes.";
 
 t_beat = 0;
 
@@ -379,6 +379,7 @@ button_down_up.check_hover() ? #hover_text = button_down_up.hover_text;
 button_random.check_hover() ? #hover_text = button_random.hover_text;
 button_asplayed.check_hover() ? #hover_text = button_asplayed.hover_text;
 button_chord.check_hover() ? #hover_text = button_chord.hover_text;
+button_sync_mode.check_hover() ? #hover_text = button_sync_mode.hover_text;
 hover.font_create(1, "Arial", 0.032);
 hover.set_from_font();
 gfx_x = gfx_w * 0.015;
