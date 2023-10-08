@@ -132,7 +132,6 @@ function test_find_next_by_idx() local(n) (
     loop(5,
         cur = __x.find_next_by_idx(cur);
         __test_find_next_by_idx &= cur == data[n];
-        n == 0 ? __v = cur;
         n += 1;
     );
 

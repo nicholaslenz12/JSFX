@@ -75,15 +75,28 @@ function button_draw() local(x, y, w, h, x_, y_, w_, h_) (
 );
 
 function button_detect_click(val) (
-    set = slider(this.slider_idx) == val;
-    mouse_cap == LEFT_MOUSE && !this.mouse_held && this.check_in_rect() && !set ? (
-        this.mouse_held = TRUE;
-    );
+    this.check_focus() ? (
+        set = slider(this.slider_idx) == val;
 
-    !mouse_cap && this.mouse_held && this.check_in_rect() ? (
-        this.clicked = !this.clicked;
-        this.mouse_held = FALSE;
-        slider(this.slider_idx) = val;
+        this.mouse_held && !this.check_in_rect() ? (
+            this.mouse_held = FALSE;
+        );
+
+        mouse_cap == LEFT_MOUSE && !this.mouse_held && this.check_in_rect() && !set ? (
+            this.mouse_held = TRUE;
+            __LAFT_FOCUSED__ = this.obj_id;
+        );
+
+        !mouse_cap && this.mouse_held && this.check_in_rect() ? (
+            this.clicked = !this.clicked;
+            this.mouse_held = FALSE;
+            slider(this.slider_idx) = val;
+            __LAFT_FOCUSED__ = NONE;
+        );
+
+        !mouse_cap ? (
+            __LAFT_FOCUSED__ = NONE;
+        );
     );
 );
 
