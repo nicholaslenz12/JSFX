@@ -15,10 +15,10 @@ import states.jsfx
 // ----------------------------------------------------------------------------
 slider1:3<0,5,1{1/1, 1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
 slider2:1<0.01,1,0.01>-Length
-slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>Play Style
+slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>-Play Style
 slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
-slider5:200<40,1000,1:log=100>Rate (Free)
-slider6:1<0,1,1{Free, Synced}>Sync Mode
+slider5:200<40,1000,1:log=100>-Rate (Free)
+slider6:1<0,1,1{Free, Synced}>-Sync Mode
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
@@ -371,7 +371,11 @@ button_sync_mode.button_draw();
 
 COFFEE.gfx_colors_from_color();
 #hover_text = "";
-rate_knob.check_hover() ? #hover_text = rate_knob.hover_text;
+slider6 == 1 ? (
+    rate_knob.check_hover() ? #hover_text = rate_knob.hover_text;
+) : (
+    rate_knob_free.check_hover() ? #hover_text = rate_knob_free.hover_text;
+);
 length_knob.check_hover() ? #hover_text = length_knob.hover_text;
 button_up.check_hover() ? #hover_text = button_up.hover_text;
 button_down.check_hover() ? #hover_text = button_down.hover_text;
