@@ -25,7 +25,7 @@ function button_create(x, y, w, h, slider_idx) (
 
     this.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
     this.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
-    this.colors_clicked.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+    this.colors_clicked.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
     this.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
     this.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 );
@@ -46,19 +46,19 @@ function check_in_rect() (
 function button_draw() local(x, y, w, h, x_, y_, w_, h_) (
     // draw border
     this.font.set_from_font();
-    this.colors_shapes.gfx_colors_from_color();
+    BORANGE.gfx_colors_from_color();
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     w = gfx_w * this.w;
     h = gfx_h * this.h;
     gfx_rect(x, y, w, h);
-    BACKGROUND.gfx_colors_from_color();
+    // BACKGROUND.gfx_colors_from_color();
     delta = 1;
     x_ = x + delta;
     y_ = y + delta;
     w_ = w - 2*delta;
     h_ = h - 2*delta;
-    gfx_rect(x_, y_, w_, h_);
+    // gfx_rect(x_, y_, w_, h_);
 
     this.clicked ? (
         this.colors_clicked.gfx_colors_from_color();
