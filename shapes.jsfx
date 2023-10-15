@@ -44,3 +44,36 @@ function draw_line(x, y, length, thick, direction) (
         r_x4, r_y4
     );
 );
+
+function draw_hex(x, y, circumradius) (
+    p.complex2(circumradius, 0);
+    x1 = x + p.creal();
+    y1 = y + p.cim();
+    p.caddphase($pi / 3);
+    x2 = x + caddphase__.creal();
+    y2 = y + caddphase__.cim();
+    p.caddphase(2 * $pi / 3);
+    x3 = x + caddphase__.creal();
+    y3 = y + caddphase__.cim();
+    p.caddphase($pi);
+    x4 = x + caddphase__.creal();
+    y4 = y + caddphase__.cim();
+    p.caddphase(4 * $pi / 3);
+    x5 = x + caddphase__.creal();
+    y5 = y + caddphase__.cim();
+    p.caddphase(4 * $pi / 3);
+    x5 = x + caddphase__.creal();
+    y5 = y + caddphase__.cim();
+    p.caddphase(5 * $pi / 3);
+    x6 = x + caddphase__.creal();
+    y6 = y + caddphase__.cim();
+
+    gfx_triangle(
+        x1, y1,
+        x2, y2,
+        x3, y3,
+        x4, y4,
+        x5, y5,
+        x6, y6
+    );
+)

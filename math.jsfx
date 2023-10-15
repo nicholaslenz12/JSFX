@@ -12,3 +12,51 @@ function mod_pos(x, m) (
     );
     x += m;
 );
+
+function complex(real, im) (
+    this.real = real;
+    this.im   = im;
+);
+
+function complex2(mod, arg) (
+    this.real = mod * cos(arg);
+    this.im   = mod * sin(arg);
+);
+
+function cmod() (
+    sqrt(this.real * this.real + this.im * this.im);
+);
+
+function creal() (
+    this.real;
+);
+
+function cim() (
+    this.im;
+);
+
+function carg() (
+    atan2(this.im, this.real); // this is reversed since x is vertical, y horizontal
+);
+
+function cpow(p) local(cmod, carg) (
+    cmod = pow(this.cmod(), p);
+    carg = mod_pos(p * this.carg(), 2 * $pi);
+
+    cpow__.real = cmod * cos(carg);
+    cpow__.im   = cmod * sin(carg);
+
+    cpow__;
+);
+
+function caddphase(rad) (
+    cmod = this.cmod();
+    carg = mod_pos(rad + this.carg(), 2 * $pi);
+    __v = carg;
+    ___v = cos(carg);
+
+    caddphase__.real = cmod * cos(carg);
+    caddphase__.im   = cmod * sin(carg);
+
+    caddphase__;
+);

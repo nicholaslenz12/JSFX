@@ -120,12 +120,15 @@ button_chord.hover_arrow_side = "Right";
 // NOTE MODIFIERS ----
 button_straight.button_create(0.44, 0.8, 0.12, 0.12, 4);
 button_straight.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_straight.hover_text = "Straight";
 button_straight.hover_arrow_side = "Top";
 button_dotted.button_create(  0.62, 0.8, 0.12, 0.12, 4);
 button_dotted.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_dotted.hover_text = "Dotted";
 button_dotted.hover_arrow_side = "Top";
 button_triplet.button_create( 0.26, 0.8, 0.12, 0.12, 4);
 button_triplet.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_triplet.hover_text = "Triplet";
 button_triplet.hover_arrow_side = "Top";
 
 // Extras ----
@@ -299,6 +302,7 @@ slider6 == 1 ? (
     );
     rate_knob.knob_update_slider(1);
     rate_knob.knob_draw_arrows();
+    rate_knob.knob_draw_progress();
 ) : (
     rate_knob_free.knob_draw();
     rate_knob_free.knob_detect_reset();
@@ -308,6 +312,7 @@ slider6 == 1 ? (
     rate_knob_free.knob_update_slider(1);
     rate_knob_free.knob_draw_arrows();
     rate_knob_free.knob_draw_specification("ms");
+    rate_knob_free.knob_draw_progress();
 );
 
 length_knob.knob_draw();
@@ -386,6 +391,9 @@ button_random.check_hover() ? #hover_text = button_random.hover_text;
 button_asplayed.check_hover() ? #hover_text = button_asplayed.hover_text;
 button_chord.check_hover() ? #hover_text = button_chord.hover_text;
 button_sync_mode.check_hover() ? #hover_text = button_sync_mode.hover_text;
+button_straight.check_hover() ? #hover_text = button_straight.hover_text;
+button_dotted.check_hover() ? #hover_text = button_dotted.hover_text;
+button_triplet.check_hover() ? #hover_text = button_triplet.hover_text;
 hover.font_create(1, "Arial", 0.032);
 hover.set_from_font();
 gfx_x = gfx_w * 0.015;

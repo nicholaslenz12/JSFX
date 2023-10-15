@@ -211,3 +211,28 @@ function knob_draw_specification(label) (
     this.font_small.set_from_font();
     text_at(this.x * gfx_w, (this.y + 0.375 * this.r) * gfx_h, label);
 );
+
+function knob_draw_progress() local(n) (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    r = min(gfx_w * this.r, gfx_h * this.r);
+    rad_offset = $pi;
+    ang1 = rad_offset;
+    ang2 = 2 * $pi * (this.val - this.min_val) / (this.max_val - this.min_val) + rad_offset;
+    ang2 = max(ang2, rad_offset + 0.01);
+    this.colors_shapes.gfx_colors_from_color();
+    r_frac = floor(r / 30);
+    r_offset = 0; // floor(r / 30);
+
+    n = 0;
+    loop(r_frac,
+        gfx_arc(x, y, r-n-r_offset, ang1, ang2, 1);
+        gfx_arc(x, y, r-n-r_offset, ang1, ang2, 1);
+        gfx_arc(x, y, r-n-r_offset, ang1, ang2, 1);
+        gfx_arc(x, y, r-n-r_offset, ang1, ang2, 1);
+        n += 1;
+    );
+
+    r_frac = floor(r / 60);
+    // draw_line(x, y+r, 0.025, 0.0025, 270);
+);
