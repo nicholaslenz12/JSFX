@@ -3,49 +3,394 @@ options:gfx_hz=60
 
 import knobs.jsfx
 import shapes.jsfx
+import math.jsfx
+import defines.jsfx
+import data_structures.jsfx
+import testing.jsfx
+import buttons.jsfx
+import states.jsfx
 
 // ----------------------------------------------------------------------------
 // SLIDER DEFINITIONS
 // ----------------------------------------------------------------------------
-slider1:1<0,6,1{1/1,1/2, 1/4, 1/8, 1/16, 1/32, 1/64}>-Rate (Synced)
+slider1:3<0,5,1{1/1, 1/2, 1/4, 1/8, 1/16, 1/32}>-Rate (Synced)
+slider2:1<0.01,1,0.01>-Length
+slider3:0<0,7,1{Up, Down, Root Descend, Up Down, Down Up, Random, As Played, Chord}>-Play Style
+slider4:0<0,2,1{Straight,Dotted,Triplet}>-Note Modifier
+slider5:200<40,1000,1:log=100>-Rate (Free)
+slider6:1<0,1,1{Free, Synced}>-Sync Mode
 
 // ----------------------------------------------------------------------------
 // DEFAULT CHANNEL CONFIGURATION
 // ----------------------------------------------------------------------------
-in_pin:left input
-in_pin:right input
-out_pin:left output
-out_pin:right output
+in_pin:none
+out_pin:none
 
 // ----------------------------------------------------------------------------
 // INIT
 // ----------------------------------------------------------------------------
 @init
+__RUN_TESTS__ ? run_tests();
+// __DEBUG__ = FALSE;
+
 gfx_ext_retina = 1;
 
-knob1.knob_create(1/2, 1/2, 1/5, 0, 6, 1, 3);
-knob1.font.font_create(1, "Arial", 0.1); // wrapper around gfx_setfont
-knob1.formatter.formatter_create("1/%d", "Power", "");
-knob1.colors_shapes.colors_create(1, 1, 1);
+function check_hover() (
+    this.type == BUTTON ? (
+        this.check_in_rect();
+    ) : (this.type == KNOB) ? (
+        this.check_in_circle();
+    ) : (
+        __PROG_STATE__ = BAD;
+    );
+);
+
+BACKGROUND.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+
+// Nice if we can do this more programmatically
+rate_knob.knob_create(1/2, 0.4, 0.27, 0, 5, 3, 1);
+rate_knob.font.font_create(1, "Arial", 0.15); // wrapper around gfx_setfont
+rate_knob.formatter.formatter_create("1/%d", "Power", "");
+rate_knob.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+rate_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+rate_knob.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+rate_knob.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+rate_knob.hover_text = "Inverse notes per beat.";
+
+rate_knob_free.knob_create(1/2, 0.4, 0.27, 40, 1000, 200, 5);
+rate_knob_free.font.font_create(1, "Arial", 0.15); // wrapper around gfx_setfont
+rate_knob_free.font_small.font_create(1, "Arial", 0.06); // wrapper around gfx_setfont
+rate_knob_free.formatter.formatter_create("%d", "Direct", "");
+rate_knob_free.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+rate_knob_free.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+rate_knob_free.colors.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+rate_knob_free.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+rate_knob_free.hover_text = "ms between notes.";
+
+length_knob.knob_create(0.825, 0.85, 0.08, 0.01, 1, 1, 2);
+length_knob.font.font_create(1, "Arial", 0.04);
+length_knob.formatter.formatter_create("%0.2f", "Direct", "Length");
+length_knob.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+length_knob.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+length_knob.colors.color_create(SOFTORANGE.r, SOFTORANGE.g, SOFTORANGE.b);
+length_knob.colors_hover.color_create(GORANGE.r, GORANGE.g, GORANGE.b);
+length_knob.hover_text = "MIDI note duration.";
+
+// ARP DIRECTIONS ----
+button_up.button_create(0.1, 0.1, 0.165, 0.12, 3);
+button_up.formatter.formatter_create("", "", "");
+button_up.hover_text = "Notes play up.";
+button_up.hover_arrow_side = "Left";
+
+button_down.button_create(0.1, 0.26, 0.165, 0.12, 3);
+button_down.formatter.formatter_create("", "", "");
+button_down.hover_text = "Notes play down.";
+button_down.hover_arrow_side = "Left";
+
+button_up_down.button_create(0.1, 0.42, 0.165, 0.12, 3);
+button_up_down.formatter.formatter_create("", "", "");
+button_up_down.hover_text = "Notes play up, then down.";
+button_up_down.hover_arrow_side = "Left";
+
+button_down_up.button_create(0.1, 0.58, 0.165, 0.12, 3);
+button_down_up.formatter.formatter_create("", "", "");
+button_down_up.hover_text = "Notes play down, then up.";
+button_down_up.hover_arrow_side = "Left";
+
+button_descend.button_create(0.75, 0.1, 0.165, 0.12, 3);
+button_descend.formatter.formatter_create("", "", "");
+button_descend.hover_text = "Notes play descending to root.";
+button_descend.hover_arrow_side = "Right";
+
+button_random.button_create(0.75, 0.26, 0.165, 0.12, 3);
+button_random.formatter.formatter_create("", "", "");
+button_random.hover_text = "Notes play randomly.";
+button_random.hover_arrow_side = "Right";
+
+button_asplayed.button_create(0.75, 0.42, 0.165, 0.12, 3);
+button_asplayed.formatter.formatter_create("", "", "");
+button_asplayed.hover_text = "Plays in order notes are entered.";
+button_asplayed.hover_arrow_side = "Right";
+
+button_chord.button_create(0.75, 0.58, 0.165, 0.12, 3);
+button_chord.formatter.formatter_create("", "", "");
+button_chord.hover_text = "Plays chords.";
+button_chord.hover_arrow_side = "Right";
+
+// NOTE MODIFIERS ----
+button_straight.button_create(0.44, 0.8, 0.12, 0.12, 4);
+button_straight.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_straight.hover_arrow_side = "Top";
+button_dotted.button_create(  0.62, 0.8, 0.12, 0.12, 4);
+button_dotted.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_dotted.hover_arrow_side = "Top";
+button_triplet.button_create( 0.26, 0.8, 0.12, 0.12, 4);
+button_triplet.colors_hover.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+button_triplet.hover_arrow_side = "Top";
+
+// Extras ----
+button_sync_mode.button_create(0.32, 0.075, 0.075, 0.075, 6);
+button_sync_mode.formatter.formatter_create("", "", "");
+button_sync_mode.hover_text = "Toggles between beat-synced and free modes.";
+
+t_beat = 0;
+
+note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
+playing_note = 0;
+
+current_note  = NONE;
+previous_note = NONE;
 
 // ----------------------------------------------------------------------------
 // SLIDER
 // ----------------------------------------------------------------------------
 @slider
-knob1.knob_detect_slider();
+rate_knob.knob_detect_slider();
+rate_knob_free.knob_detect_slider();
+length_knob.knob_detect_slider();
+
+button_up.button_detect_slider(0);
+button_down.button_detect_slider(1);
+button_descend.button_detect_slider(2);
+button_up_down.button_detect_slider(3);
+button_down_up.button_detect_slider(4);
+button_random.button_detect_slider(5);
+button_asplayed.button_detect_slider(6);
+button_chord.button_detect_slider(7);
+
+button_straight.button_detect_slider(0);
+button_dotted.button_detect_slider(1);
+button_triplet.button_detect_slider(2);
+
+button_sync_mode.button_detect_slider(1); // 1 -> "On"
+
+// ----------------------------------------------------------------------------
+// BLOCK
+// ----------------------------------------------------------------------------
+@block
+rate_mode = slider6;
+
+remove_count = 0;
+first = TRUE;
+first_offset = 0;
+prev_list_len = note_list.length;
+while (midirecv(offset, cmd, note, vel)) (
+    cmd == NOTE_ON && vel > 0 ? ( // Add note to the note list
+        !note_list.contains(note) ? (
+            note_list.push(note);
+        );
+    ) : (cmd == NOTE_OFF || cmd == NOTE_ON) ? ( // Remove note from note list, (kill note if being played)
+        note_list.contains(note) ? ( // this is getting a bit hairy
+            midisend(offset, NOTE_OFF, note);
+            first ? ( // track if all note offs happen at the same place
+                first_offset = offset;
+                remove_count += 1;
+            ) : (
+                offset == first_offset ? (
+                    remove_count += 1;
+                );
+            );
+            current_note = NONE;
+        );
+        note_list.remove(note);
+    ) : ( // passthrough other events
+        midisend(offset, cmd, key, vel);
+    );
+);
+hard_reset = remove_count == prev_list_len && prev_list_len > 0;
+hard_reset_offset = first_offset;
+
+// kill any dangling notes (risk of FLP error?)
+note_list.length == 0 && current_note != NONE ? (
+    midisend(0, NOTE_OFF, current_note);
+    current_note = NONE;
+);
+
+// can we do this elsewhere?
+beat_fraction = 2 ^ -slider(rate_knob.slider_idx);
+note_mod = slider4 == 0 ? 1 : slider4 == 1 ? 3 / 2 : 2 / 3;
+rate_mode == 1 ? ( // Free / Sync
+    cycle_rate = 1/srate * tempo/60 / beat_fraction / 4 / note_mod;
+) : (
+    cycle_rate = 1/srate / (slider5 / 1000);
+);
+sample_position = 0;
+
+// Just starting, so start playout of next note immediately
+note_list.length > 0 && prev_list_len == 0 ? (
+    rate_mode == 1 ? ( // Free / Sync
+        t_beat = mod_pos(beat_position, (4*beat_fraction*note_mod)) / (4*beat_fraction*note_mod);
+    ) : (
+        t_beat = 0;
+    );
+    play_immediately = 1;
+);
 
 // ----------------------------------------------------------------------------
 // SAMPLE
 // ----------------------------------------------------------------------------
 @sample
+t_beat += cycle_rate;
 
+play_note_trigger  = t_beat >= 1 || play_immediately;
+hard_reset_trigger = sample_position == hard_reset_offset && hard_reset;
+// __DEBUG__ && sample_number == 96000 ? (
+//     ___play_note_trigger = play_note_trigger;
+//     ___hard_reset_trigger = hard_reset_trigger;
+//     ___playing_note = playing_note;
+//     ___note_list = note_list.length;
+// );
+note_list.length > 0 && (play_note_trigger && !playing_note) || hard_reset_trigger ? (
+    !play_immediately  ? t_beat -= 1;
+    hard_reset_trigger ? t_beat = cycle_rate; // why not 0? sketchy off by one possible here
+
+    old_current = current_note;
+    slider3 == 0 ? current_note = note_list.find_next_cyclic(current_note, FORWARD);
+    slider3 == 1 ? current_note = note_list.find_next_cyclic(current_note, BACKWARD);
+    slider3 == 2 ? current_note = note_list.root_descend(current_note, previous_note);
+    slider3 == 3 ? current_note = note_list.up_down(current_note, previous_note, FORWARD);
+    slider3 == 4 ? current_note = note_list.up_down(current_note, previous_note, BACKWARD);
+    slider3 == 5 ? current_note = note_list.rand_element();
+    slider3 == 6 ? current_note = note_list.find_next_by_idx(current_note);
+    previous_note = old_current;
+    slider3 == 7 ? (
+        l = 0;
+        loop(note_list.length,
+            midisend(sample_position, NOTE_ON, note_list[l], 127);
+            l += 1;
+        );
+    ) : (
+        midisend(sample_position, NOTE_ON, current_note, 127);
+    );
+    playing_note = 1;
+    play_immediately = 0;
+);
+
+note_list.length > 0 && t_beat >= slider(length_knob.slider_idx) && playing_note ? (
+    slider3 == 7 ? (
+        l = 0;
+        loop(note_list.length,
+            midisend(sample_position, NOTE_OFF, note_list[l], 127);
+            l += 1;
+        );
+    ) : (
+        midisend(sample_position, NOTE_OFF, current_note, 127);
+    );
+    playing_note = 0;
+);
+
+sample_position += 1;
+// __DEBUG__ && sample_number += 1;
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
 @gfx 600 400
 
-knob1.knob_draw();
-knob1.knob_detect_reset();
-knob1.knob_detect_drag();
-knob1.knob_update_slider(1);
-knob1.knob_draw_arrows();
+BACKGROUND.gfx_colors_from_color();
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// gfx_a = 0.3;
+
+slider6 == 1 ? (
+    rate_knob.knob_draw();
+    rate_knob.knob_detect_reset();
+    rate_knob.check_focus() ? (
+        rate_knob.knob_detect_drag();
+    );
+    rate_knob.knob_update_slider(1);
+    rate_knob.knob_draw_arrows();
+) : (
+    rate_knob_free.knob_draw();
+    rate_knob_free.knob_detect_reset();
+    rate_knob_free.check_focus() ? (
+        rate_knob_free.knob_detect_drag();
+    );
+    rate_knob_free.knob_update_slider(1);
+    rate_knob_free.knob_draw_arrows();
+    rate_knob_free.knob_draw_specification("ms");
+);
+
+length_knob.knob_draw();
+length_knob.knob_detect_reset();
+length_knob.check_focus() ? (
+    length_knob.knob_detect_drag();
+);
+length_knob.knob_update_slider(0.01);
+
+old_slider = slider3;
+button_up.button_detect_click(0);
+button_down.button_detect_click(1);
+button_descend.button_detect_click(2);
+button_up_down.button_detect_click(3);
+button_down_up.button_detect_click(4);
+button_random.button_detect_click(5);
+button_asplayed.button_detect_click(6);
+button_chord.button_detect_click(7);
+
+button_up.button_update_slider(old_slider, 0);
+button_down.button_update_slider(old_slider, 1);
+button_descend.button_update_slider(old_slider, 2);
+button_up_down.button_update_slider(old_slider, 3);
+button_down_up.button_update_slider(old_slider, 4);
+button_random.button_update_slider(old_slider, 5);
+button_asplayed.button_update_slider(old_slider, 6);
+button_chord.button_update_slider(old_slider, 7);
+
+button_up.button_draw();
+button_down.button_draw();
+button_descend.button_draw();
+button_up_down.button_draw();
+button_down_up.button_draw();
+button_random.button_draw();
+button_asplayed.button_draw();
+button_chord.button_draw();
+
+button_up.button_draw_up_rect();
+button_down.button_draw_down_rect();
+
+old_slider = slider4;
+button_straight.button_detect_click(0);
+button_dotted.button_detect_click(1);
+button_triplet.button_detect_click(2);
+button_straight.button_update_slider(old_slider, 0);
+button_dotted.button_update_slider(old_slider, 1);
+button_triplet.button_update_slider(old_slider, 2);
+
+button_straight.button_draw();
+button_dotted.button_draw();
+button_triplet.button_draw();
+
+old_slider = slider6;
+button_sync_mode.button_detect_click(slider6 == 0 ? 1 : 0); // set up toggle
+button_sync_mode.button_update_slider(old_slider, 1); // set up toggle
+button_sync_mode.button_draw();
+
+// gfx_a = 1;
+// SIGHTORANGE.gfx_colors_from_color();
+// gfx_rect(200, 200, 800, 600);
+
+COFFEE.gfx_colors_from_color();
+#hover_text = "";
+slider6 == 1 ? (
+    rate_knob.check_hover() ? #hover_text = rate_knob.hover_text;
+) : (
+    rate_knob_free.check_hover() ? #hover_text = rate_knob_free.hover_text;
+);
+length_knob.check_hover() ? #hover_text = length_knob.hover_text;
+button_up.check_hover() ? #hover_text = button_up.hover_text;
+button_down.check_hover() ? #hover_text = button_down.hover_text;
+button_descend.check_hover() ? #hover_text = button_descend.hover_text;
+button_up_down.check_hover() ? #hover_text = button_up_down.hover_text;
+button_down_up.check_hover() ? #hover_text = button_down_up.hover_text;
+button_random.check_hover() ? #hover_text = button_random.hover_text;
+button_asplayed.check_hover() ? #hover_text = button_asplayed.hover_text;
+button_chord.check_hover() ? #hover_text = button_chord.hover_text;
+button_sync_mode.check_hover() ? #hover_text = button_sync_mode.hover_text;
+hover.font_create(1, "Arial", 0.032);
+hover.set_from_font();
+gfx_x = gfx_w * 0.015;
+gfx_y = gfx_h * 0.95;
+gfx_drawstr(#hover_text);
+
+__PROG_STATE__   != GOOD ? gfx_drawstr("BAD PROG STATE");
+__TEST_RESULTS__ != GOOD ? gfx_drawstr("TEST REGRESSION");

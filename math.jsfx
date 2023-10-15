@@ -4,3 +4,11 @@ desc:Math
 function round(x) (
     floor(x + 0.5);
 );
+
+function mod_pos(x, m) (
+    while (
+        x -= m;
+        x >= 0;
+    );
+    x += m;
+);

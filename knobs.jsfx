@@ -7,7 +7,6 @@ import shapes.jsfx
 
 // TODO:
 // - Make reset times independent of framerate
-// - RGB color object parameter
 
 @init
 // If this is not detected to a slider, you can pass 0 for slider_idx
@@ -30,9 +29,13 @@ function knob_create(x, y, r, min_val, max_val, init_val, slider_idx) (
     this.reset = 0;
 
     this.slider_idx = slider_idx;
+    this.obj_id = __OBJ_COUNT__;
+    __OBJ_COUNT__ += 1;
+    this.type = KNOB;
 );
 
-function check_in_range() (
+// normalize mouse position instead?
+function check_in_circle() (
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
@@ -48,20 +51,17 @@ function knob_draw() instance(val) (
     r = min(gfx_w * this.r, gfx_h * this.r);
     this.font.set_from_font();
     
-    this.colors.set_from_colors();
-    this.check_in_range() || this.mouse_held ? this.colors_hover.set_from_colors();
+    this.colors.gfx_colors_from_color();
+    this.check_in_circle() || this.mouse_held ? this.colors_hover.gfx_colors_from_color();
     gfx_circle(x, y, r, 1, antialias);
-    black();
+    BACKGROUND.gfx_colors_from_color();
     norm = (val - this.min_val) / (this.max_val - this.min_val);
     gfx_rect(x-r, y-r, 2*r, 2*r*(1 - norm));
-    white();
+    this.colors_shapes.gfx_colors_from_color();
     gfx_circle(x, y, r, 0, antialias);
+    this.colors_font.gfx_colors_from_color();
     (strlen(this.formatter.label) > 0) && (!this.mouse_held) ? ( // draw label
-        a = b = 0;
-        gfx_measurestr(this.formatter.label, a, b);
-        gfx_x = x - a/2;
-        gfx_y = y - b/2;
-        gfx_printf("%s", this.formatter.label);
+        text_at(x, y, this.formatter.label);
     ) : ( // draw parameter value
         #s = "";
         strcmp(this.formatter.mod, "Direct") == 0 ? (
@@ -78,21 +78,21 @@ function knob_draw() instance(val) (
 );
 
 function knob_draw_arrows() (
-    this.colors_shapes.set_from_colors();
-    this.mouse_held || this.check_in_range() ? (
+    this.colors_shapes.gfx_colors_from_color();
+    this.mouse_held || this.check_in_circle() ? (
         x = gfx_w * this.x;
         y = gfx_h * this.y;
         r = this.r * min(gfx_w, gfx_h);
         shift = 0.75 * r;
 
-        draw_arrow(x, y + shift, 0, 0.04, 90);
-        draw_arrow(x, y - shift, 0, 0.04, 270);
+        draw_arrow(x, y + shift, 0, 0.04, 90, 0.4);
+        draw_arrow(x, y - shift, 0, 0.04, 270, 0.4);
     );
 );
 
 function knob_draw_support_lines() (
-    this.colors_shapes.set_from_colors();
-    this.mouse_held || this.check_in_range() ? (
+    this.colors_shapes.gfx_colors_from_color();
+    this.mouse_held || this.check_in_circle() ? (
         x = gfx_w * this.x;
         y = gfx_h * this.y;
         r = this.r * min(gfx_w, gfx_h);
@@ -110,14 +110,16 @@ function knob_detect_drag() instance(val) (
     y = gfx_h * this.y;
     r = min(gfx_w * this.r, gfx_h * this.r);
 
-    mouse_cap == 1 && !this.mouse_held && this.check_in_range() && !this.reset ? (
+    mouse_cap == LEFT_MOUSE && !this.mouse_held && this.check_in_circle() && !this.reset ? (
         this.mouse_held = 1;
         hold_x = mouse_x;
         hold_y = mouse_y;
         val_    = val;
+        __LAFT_FOCUSED__ = this.obj_id;
     );
     !mouse_cap ? (
         this.mouse_held = 0;
+        __LAFT_FOCUSED__ = NONE;
     );
     
     this.mouse_held && !this.reset ? (
@@ -137,7 +139,7 @@ function knob_detect_drag() instance(val) (
 );
 
 function knob_detect_reset() instance(val) (
-    this.check_in_range() ? (
+    this.check_in_circle() ? (
         // starts the clock awaiting second click
         mouse_cap && this.clicked_time == 0 && this.reset_time == 0 ? (
             this.clicked_time = 15;
@@ -148,7 +150,7 @@ function knob_detect_reset() instance(val) (
         
         // sets await for second click after picking up mouse
         // also allows knob to be dragged again after reset
-        mouse_cap == 0 ? (
+        !mouse_cap ? (
             this.unclicked = 1;
             this.reset = 0;
         );
@@ -185,8 +187,8 @@ function knob_help_dialog(min_width, min_height, message) (
     min_width  *= min(gfx_w, gfx_h);
     min_height *= min(gfx_w, gfx_h);
 
-    this.check_in_range() && (!mouse_cap) ? (
-        manilla2();
+    this.check_in_circle() && !mouse_cap ? (
+        MANILLA1.gfx_colors_from_color();
         a = b = 0;
         this.font.set_from_font_halfsize();
         gfx_measurestr(message, a, b);
@@ -195,11 +197,17 @@ function knob_help_dialog(min_width, min_height, message) (
         gfx_rect(mouse_x, mouse_y, a * 1.2, b * 1.2);
         gfx_x = mouse_x + a * 0.1;
         gfx_y = mouse_y + b * 0.1;
-        black();
+        BLACK.gfx_colors_from_color();
         gfx_drawstr(message);
     );
 );
 
 function knob_detect_slider() instance(slider_idx) (
     this.val = slider(slider_idx);
+);
+
+function knob_draw_specification(label) (
+    this.colors_font.gfx_colors_from_color();
+    this.font_small.set_from_font();
+    text_at(this.x * gfx_w, (this.y + 0.375 * this.r) * gfx_h, label);
 );

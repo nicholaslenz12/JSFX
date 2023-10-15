@@ -19,3 +19,10 @@ function formatter_create(format, mod, label) (
     this.mod = mod;
     this.label = label;
 );
+
+function text_at(x, y, label) local(a, b) (
+    gfx_measurestr(label, a, b);
+    gfx_x = x - a/2;
+    gfx_y = y - b/2;
+    gfx_printf("%s", label);
+);

@@ -1,31 +1,50 @@
 desc:Colors
 
 @init
-function colors_create(r, g, b) (
+function color_create(r, g, b) (
     this.r = r;
     this.g = g;
     this.b = b;
 );
 
-function set_from_values(r, g, b) (
+function gfx_colors_from_values(r, g, b) (
     gfx_r = r;
     gfx_g = g;
     gfx_b = b;
 );
 
-function set_from_colors() (
+function gfx_colors_from_color() (
     gfx_r = this.r;
     gfx_g = this.g;
     gfx_b = this.b;
 );
 
-function black()    ( gfx_r = 0;     gfx_g = 0;     gfx_b = 0;     );
-function white()    ( gfx_r = 1;     gfx_g = 1;     gfx_b = 1;     );
-function manilla1() ( gfx_r = 0.996; gfx_g = 0.945; gfx_b = 0.863; );
-function manilla2() ( gfx_r = 0.945; gfx_g = 0.835; gfx_b = 0.573; );
+// function black()       ( gfx_r = 0;       gfx_g = 0;       gfx_b = 0;     );   // #000000
+// function white()       ( gfx_r = 1;       gfx_g = 1;       gfx_b = 1;     );   // #ffffff
+// function manilla1()    ( gfx_r = 0.996;   gfx_g = 0.945;   gfx_b = 0.863; );   // #fef1dc
+// function manilla2()    ( gfx_r = 0.945;   gfx_g = 0.835;   gfx_b = 0.573; );   // #f1d592
+// function softorange()  ( gfx_r = 228/255; gfx_g = 188/255; gfx_b = 132/255; ); // #e4bc84
+// function lightorange() ( gfx_r = 242/255; gfx_g = 222/255; gfx_b = 195/255; ); // #f2dec3
+// function coffee()      ( gfx_r = 135/255; gfx_g =  90/255; gfx_b =  71/255; ); // #875a47
 
-function gray(level) (
-    gfx_r = level;
-    gfx_g = level;
-    gfx_b = level;
-);
+BLACK.color_create(             0,       0,       0); // #000000
+WHITE.color_create(             1,       1,       1); // #ffffff
+MANILLA1.color_create(      0.996,   0.945,   0.863); // #fef1dc
+MANILLA2.color_create(      0.945,   0.835,   0.573); // #f1d592
+LIGHTORANGE.color_create( 242/255, 222/255, 195/255); // #f2dec3
+SIGHTORANGE.color_create( 237/255, 211/255, 174/255); // #e8c899
+SOFTORANGE.color_create(  228/255, 188/255, 132/255); // #e4bc84
+GORANGE.color_create(     223/255, 177/255, 111/255); // #dfb16f
+BORANGE.color_create(     219/255, 165/255,  90/255); // #dba55a
+COFFEE.color_create(      135/255,  90/255,  71/255); // #875a47
+
+// function parse_from_hex(color) (
+//     // strcpy_substr(#r, color, 1, 2);
+//     <?
+//     printf("gfx_r = $x%s/255;\n", #r);
+//     printf("gfx_g = 0;\n");
+//     printf("gfx_b = 0;\n");
+//     ?>
+// );
+
+// f(x) = string(string.(round.(Int, 255 .* x), base=16)...)

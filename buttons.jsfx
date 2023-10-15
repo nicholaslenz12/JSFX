@@ -1,0 +1,158 @@
+desc:Buttons
+
+import colors.jsfx
+import fonts.jsfx
+import math.jsfx
+import shapes.jsfx
+import defines.jsfx
+import states.jsfx
+
+@init
+// If this is not detected to a slider, you can pass 0 for slider_idx
+function button_create(x, y, w, h, slider_idx) (
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+
+    this.clicked = FALSE;
+    this.mouse_held = FALSE;
+
+    this.slider_idx = slider_idx;
+    this.obj_id = __OBJ_COUNT__;
+    __OBJ_COUNT__ += 1;
+    this.type = BUTTON;
+
+    this.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+    this.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
+    this.colors_clicked.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+    this.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
+    this.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
+);
+
+// normalize mouse position instead?
+function check_in_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    in_range = (
+        x < mouse_x && mouse_x < x + w &&
+        y < mouse_y && mouse_y < y + h
+    );
+);
+
+function button_draw() local(x, y, w, h, x_, y_, w_, h_) (
+    // draw border
+    this.font.set_from_font();
+    this.colors_shapes.gfx_colors_from_color();
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+    gfx_rect(x, y, w, h);
+    BACKGROUND.gfx_colors_from_color();
+    delta = 1;
+    x_ = x + delta;
+    y_ = y + delta;
+    w_ = w - 2*delta;
+    h_ = h - 2*delta;
+    gfx_rect(x_, y_, w_, h_);
+
+    this.clicked ? (
+        this.colors_clicked.gfx_colors_from_color();
+        gfx_rect(x_, y_, w_, h_);
+    );
+    this.check_in_rect() ? (
+        this.colors_shapes.gfx_colors_from_color();
+        this.hover_arrow_side == "Right" ? ( // TODO: map case to lower
+            draw_arrow(x + 1.1 * w, y + 0.5 * h, 0, 0.04, 180, 0.4);
+        ) : (this.hover_arrow_side == "Top") ? (
+            draw_arrow(x + 0.5 * w, y - 0.1 * h, 0, 0.04, 90, 0.4);
+        ): ( // Left
+            draw_arrow(x - 0.1 * w, y + 0.5 * h, 0, 0.04, 0, 0.4);
+        );
+    );
+
+    this.colors_font.gfx_colors_from_color();
+    text_at(x + w/2, y + h/2, this.formatter.label);
+);
+
+function button_detect_click(val) (
+    this.check_focus() ? (
+        set = slider(this.slider_idx) == val;
+
+        this.mouse_held && !this.check_in_rect() ? (
+            this.mouse_held = FALSE;
+        );
+
+        mouse_cap == LEFT_MOUSE && !this.mouse_held && this.check_in_rect() && !set ? (
+            this.mouse_held = TRUE;
+            __LAFT_FOCUSED__ = this.obj_id;
+        );
+
+        !mouse_cap && this.mouse_held && this.check_in_rect() ? (
+            this.clicked = !this.clicked;
+            this.mouse_held = FALSE;
+            slider(this.slider_idx) = val;
+            __LAFT_FOCUSED__ = NONE;
+        );
+
+        !mouse_cap ? (
+            __LAFT_FOCUSED__ = NONE;
+        );
+    );
+);
+
+function button_update_slider(old_val, val) instance(slider_idx) (
+    slider(slider_idx) != old_val ? (
+        slider_automate(2 ^ (slider_idx-1));
+        this.clicked = slider(slider_idx) == val;
+    );
+);
+
+function button_detect_slider(val) instance(slider_idx) (
+    this.clicked = slider(slider_idx) == val;
+);
+
+// function button_draw_arrows(angle) (
+//     x = gfx_w * this.x;
+//     y = gfx_h * this.y;
+//     w = gfx_w * this.w;
+//     h = gfx_h * this.h;
+//     rad = angle / 360 * 2 * $pi;
+//     head_size  = 0.06;
+//     head_size_ = head_size * min(gfx_w, gfx_h);
+//     x_ = x + w/2 + head_size_/2 * cos(rad);
+//     y_ = y + h/2 + head_size_/2 * sin(rad);
+//     draw_arrow(x_, y_, 0, head_size, angle, 0.2);
+// );
+
+function button_draw_up_rect(angle) (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    GORANGE.gfx_colors_from_color();
+    gfx_rect(x + 0.1 * w, y + 0.7 * h, 0.25 * w, 0.2 * h);
+    BORANGE.gfx_colors_from_color();
+    gfx_rect(x + 0.375 * w, y + 0.4 * h, 0.25 * w, 0.2  * h);
+    COFFEE.gfx_colors_from_color();
+    gfx_rect(x + 0.65 * w, y + 0.10  * h, 0.25 * w, 0.2  * h);
+);
+
+function button_draw_down_rect(angle) (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    GORANGE.gfx_colors_from_color();
+    gfx_rect(x + 0.1 * w, y + 0.10 * h, 0.25 * w, 0.2 * h);
+    BORANGE.gfx_colors_from_color();
+    gfx_rect(x + 0.375 * w, y + 0.4 * h, 0.25 * w, 0.2  * h);
+    COFFEE.gfx_colors_from_color();
+    gfx_rect(x + 0.65 * w, y + 0.7  * h, 0.25 * w, 0.2  * h);
+);
