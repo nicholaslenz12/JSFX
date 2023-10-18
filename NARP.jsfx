@@ -216,7 +216,7 @@ while (midirecv(offset, cmd, note, vel)) (
     );
 );
 hard_reset = remove_count == prev_list_len && prev_list_len > 0;
-hard_reset_offset = first_offset;
+hard_reset_offset = offset;
 
 // kill any dangling notes (risk of FLP error?)
 note_list.length == 0 && current_note != NONE ? (
