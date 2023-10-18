@@ -250,7 +250,7 @@ note_list.length > 0 && prev_list_len == 0 ? (
 @sample
 t_beat += cycle_rate;
 
-play_note_trigger  = t_beat >= 1 || play_immediately;
+play_note_trigger  = t_beat >= 1 || (play_immediately && sample_position == offset);
 hard_reset_trigger = sample_position == hard_reset_offset && hard_reset;
 // __DEBUG__ && sample_number == 96000 ? (
 //     ___play_note_trigger = play_note_trigger;
