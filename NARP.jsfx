@@ -1,4 +1,4 @@
-desc:NARP
+desc:NARP MIDI Arp
 options:gfx_hz=60
 
 import knobs.jsfx
