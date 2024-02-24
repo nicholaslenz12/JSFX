@@ -258,7 +258,7 @@ hard_reset_trigger = sample_position == hard_reset_offset && hard_reset;
 //     ___playing_note = playing_note;
 //     ___note_list = note_list.length;
 // );
-note_list.length > 0 && (play_note_trigger && !playing_note) || hard_reset_trigger ? (
+note_list.length > 0 && ((play_note_trigger && !playing_note) || hard_reset_trigger) ? (
     !play_immediately  ? t_beat -= 1;
     hard_reset_trigger ? t_beat = cycle_rate; // why not 0? sketchy off by one possible here
 
