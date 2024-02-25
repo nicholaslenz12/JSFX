@@ -188,9 +188,6 @@ button_sync_mode.button_detect_slider(1); // 1 -> "On"
 @block
 rate_mode = slider6;
 
-remove_count = 0;
-first = TRUE;
-first_offset = 0;
 prev_list_len = note_list.length;
 while (midirecv(offset, cmd, note, vel)) (
     cmd == NOTE_ON && vel > 0 ? ( // Add note to the note list
@@ -198,16 +195,8 @@ while (midirecv(offset, cmd, note, vel)) (
             note_list.push(note);
         );
     ) : (cmd == NOTE_OFF || cmd == NOTE_ON) ? ( // Remove note from note list, (kill note if being played)
-        note_list.contains(note) ? ( // this is getting a bit hairy
+        note_list.contains(note) ? (
             midisend(offset, NOTE_OFF, note);
-            first ? ( // track if all note offs happen at the same place
-                first_offset = offset;
-                remove_count += 1;
-            ) : (
-                offset == first_offset ? (
-                    remove_count += 1;
-                );
-            );
             current_note = NONE;
         );
         note_list.remove(note);
@@ -215,8 +204,6 @@ while (midirecv(offset, cmd, note, vel)) (
         midisend(offset, cmd, key, vel);
     );
 );
-hard_reset = remove_count == prev_list_len && prev_list_len > 0;
-hard_reset_offset = offset;
 
 // kill any dangling notes (risk of FLP error?)
 note_list.length == 0 && current_note != NONE ? (
@@ -239,10 +226,10 @@ note_list.length > 0 && prev_list_len == 0 ? (
     rate_mode == 1 ? ( // Free / Sync
         musical_len = 4*beat_fraction*note_mod;
         t_beat = beat_position == 0 ? 1 : mod_pos(beat_position, musical_len) / musical_len;
+        play_immediately = 1;
     ) : (
-        t_beat = 0;
+        t_beat = 1;
     );
-    play_immediately = 1;
 );
 
 // ----------------------------------------------------------------------------
@@ -251,16 +238,13 @@ note_list.length > 0 && prev_list_len == 0 ? (
 @sample
 
 play_note_trigger  = t_beat >= 1 || (play_immediately && sample_position == offset);
-hard_reset_trigger = sample_position == hard_reset_offset && hard_reset;
 __DEBUG__ && sample_number == 96000 ? (
     ___play_note_trigger = play_note_trigger;
-    ___hard_reset_trigger = hard_reset_trigger;
     ___playing_note = playing_note;
     ___note_list = note_list.length;
 );
-note_list.length > 0 && ((play_note_trigger && !playing_note) || hard_reset_trigger) ? (
+note_list.length > 0 && ((play_note_trigger && !playing_note)) ? (
     !play_immediately || t_beat >= 1 ? t_beat -= 1; // can we simplify check to `play_note_trigger`?
-    hard_reset_trigger ? t_beat = cycle_rate; // why not 0? sketchy off by one possible here
     __DEBUG__ ? (
         ___v == 1 ? ___on1 = sample_number;
         ___v == 2 ? ___on2 = sample_number;
@@ -268,7 +252,6 @@ note_list.length > 0 && ((play_note_trigger && !playing_note) || hard_reset_trig
         ___v == 2 ? ___on2_play_immediately = play_immediately;
         ___v == 2 ? ___on2_t_beat = t_beat >= 1;
         ___v == 2 ? ___on2_not_playing_note = !playing_note;
-        ___v == 2 ? ___on2_hard_reset_trigger = hard_reset_trigger;
     );
 
     old_current = current_note;
