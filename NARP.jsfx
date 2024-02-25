@@ -233,7 +233,7 @@ note_list.length > 0 && prev_list_len == 0 ? (
 @sample
 
 play_note_trigger = play_immediately ? (
-    1; // sample_position == offset; << shouldn't this be aligned in to offset in @block?
+    sample_position == offset; // sample_position == offset; << shouldn't this be aligned in to offset in @block?
 ) : (
     t_beat >= 1;
 );
