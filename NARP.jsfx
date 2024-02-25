@@ -191,6 +191,8 @@ rate_mode = slider6;
 
 prev_list_len = note_list.length;
 while (midirecv(offset, cmd, note, vel)) (
+    // cmd     = cmd & cmd_mask;
+    // channel = cmd & channel_mask;
     cmd == NOTE_ON && vel > 0 ? ( // Add note to the note list
         !note_list.contains(note) ? (
             note_list.push(note);
