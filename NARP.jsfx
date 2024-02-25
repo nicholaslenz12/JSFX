@@ -31,7 +31,7 @@ out_pin:none
 // ----------------------------------------------------------------------------
 @init
 __RUN_TESTS__ ? run_tests();
-__DEBUG__ = TRUE;
+___DEBUG___ = FALSE;
 
 gfx_ext_retina = 1;
 
@@ -236,10 +236,10 @@ play_note_trigger = play_immediately ? (
 ) : (
     t_beat >= 1;
 );
-__DEBUG__ && sample_number == 96000 ? (
-    ___play_note_trigger = play_note_trigger;
-    ___playing_note = playing_note;
-    ___note_list = note_list.length;
+___DEBUG___ && sample_number == 96000 ? (
+    ___DEBUG_play_note_trigger = play_note_trigger;
+    ___DEBUG_playing_note = playing_note;
+    ___DEBUG_note_list = note_list.length;
 );
 note_list.length > 0 && ((play_note_trigger && !playing_note)) ? (
     play_immediately ? (
@@ -247,13 +247,14 @@ note_list.length > 0 && ((play_note_trigger && !playing_note)) ? (
     ) : (
         t_beat >= 1 ? t_beat -= 1;
     );
-    __DEBUG__ ? (
-        ___v == 1 ? ___on1 = sample_number;
-        ___v == 2 ? ___on2 = sample_number;
-        ___v == 2 ? ___on2_note_list_length = note_list.length;
-        ___v == 2 ? ___on2_play_immediately = play_immediately;
-        ___v == 2 ? ___on2_t_beat = t_beat >= 1;
-        ___v == 2 ? ___on2_not_playing_note = !playing_note;
+    ___DEBUG___ ? (
+        ___DEBUG_idx += 1;
+        ___DEBUG_idx == 1 ? ___DEBUG_on1 = sample_number;
+        ___DEBUG_idx == 2 ? ___DEBUG_on2 = sample_number;
+        ___DEBUG_idx == 2 ? ___DEBUG_on2_note_list_length = note_list.length;
+        ___DEBUG_idx == 2 ? ___DEBUG_on2_play_immediately = play_immediately;
+        ___DEBUG_idx == 2 ? ___DEBUG_on2_t_beat = t_beat >= 1;
+        ___DEBUG_idx == 2 ? ___DEBUG_on2_not_playing_note = !playing_note;
     );
 
     old_current = current_note;
@@ -296,7 +297,7 @@ t_beat >= slider(length_knob.slider_idx) && playing_note ? (
 
 sample_position += 1;
 t_beat += cycle_rate;
-__DEBUG__ && sample_number += 1;
+___DEBUG___ && sample_number += 1;
 // ----------------------------------------------------------------------------
 // GRAPHICS
 // ----------------------------------------------------------------------------
