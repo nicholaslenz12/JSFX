@@ -198,7 +198,7 @@ while (midirecv(offset, cmd, note, vel)) (
     ) : (cmd == NOTE_OFF || cmd == NOTE_ON) ? ( // Remove note from note list, (kill note if being played)
         note_list.remove(note);
     ) : ( // passthrough other events
-        midisend(offset, cmd, key, vel);
+        midisend(offset, cmd, note, vel);
     );
 );
 
