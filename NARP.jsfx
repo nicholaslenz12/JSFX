@@ -255,15 +255,16 @@ note_list.length > 0 && ((play_note_trigger && !playing_note)) ? (
     );
 
     old_current = current_note;
-    slider3 == 0 ? current_note = note_list.find_next_cyclic(current_note, FORWARD);
-    slider3 == 1 ? current_note = note_list.find_next_cyclic(current_note, BACKWARD);
-    slider3 == 2 ? current_note = note_list.root_descend(current_note, previous_note);
-    slider3 == 3 ? current_note = note_list.up_down(current_note, previous_note, FORWARD);
-    slider3 == 4 ? current_note = note_list.up_down(current_note, previous_note, BACKWARD);
-    slider3 == 5 ? current_note = note_list.rand_element();
-    slider3 == 6 ? current_note = note_list.find_next_by_idx(current_note);
+    play_mode = slider3;
+    play_mode == 0 ? current_note = note_list.find_next_cyclic(current_note, FORWARD);
+    play_mode == 1 ? current_note = note_list.find_next_cyclic(current_note, BACKWARD);
+    play_mode == 2 ? current_note = note_list.root_descend(current_note, previous_note);
+    play_mode == 3 ? current_note = note_list.up_down(current_note, previous_note, FORWARD);
+    play_mode == 4 ? current_note = note_list.up_down(current_note, previous_note, BACKWARD);
+    play_mode == 5 ? current_note = note_list.rand_element();
+    play_mode == 6 ? current_note = note_list.find_next_by_idx(current_note);
     previous_note = old_current;
-    slider3 == 7 ? (
+    play_mode == 7 ? (
         l = 0;
         loop(note_list.length,
             midisend(sample_position, NOTE_ON, note_list[l], 127);
@@ -278,7 +279,7 @@ note_list.length > 0 && ((play_note_trigger && !playing_note)) ? (
 );
 
 t_beat >= slider(length_knob.slider_idx) && playing_note ? (
-    slider3 == 7 ? (
+    play_mode == 7 ? (
         l = 0;
         loop(play_list.length,
             midisend(sample_position, NOTE_OFF, play_list[l], 127);
