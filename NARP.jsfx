@@ -206,7 +206,8 @@ while (midirecv(offset, cmd, note, vel)) (
 
 // kill any dangling notes (risk of FLP error?)
 note_list.length == 0 && current_note != NONE ? (
-    midisend(0, NOTE_OFF, current_note);
+    // midisend(0, NOTE_OFF, current_note);
+    midisend(offset, NOTE_OFF, current_note);
     current_note = NONE;
 );
 
