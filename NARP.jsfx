@@ -154,6 +154,7 @@ button_sync_mode.hover_text = "Toggles between beat-synced and free modes.";
 t_beat = 0;
 
 note_list = 0; // stores binary for key pressed, native reaper arp uses velocities
+play_list = 10000;
 playing_note = 0;
 
 current_note  = NONE;
@@ -195,10 +196,6 @@ while (midirecv(offset, cmd, note, vel)) (
             note_list.push(note);
         );
     ) : (cmd == NOTE_OFF || cmd == NOTE_ON) ? ( // Remove note from note list, (kill note if being played)
-        note_list.contains(note) ? (
-            midisend(offset, NOTE_OFF, note);
-            current_note = NONE;
-        );
         note_list.remove(note);
     ) : ( // passthrough other events
         midisend(offset, cmd, key, vel);
@@ -223,13 +220,8 @@ sample_position = 0;
 
 // Just starting, so start playout of next note immediately
 note_list.length > 0 && prev_list_len == 0 ? (
-    rate_mode == 1 ? ( // Free / Sync
-        musical_len = 4*beat_fraction*note_mod;
-        t_beat = beat_position == 0 ? 1 : mod_pos(beat_position, musical_len) / musical_len;
-        play_immediately = 1;
-    ) : (
-        t_beat = 1;
-    );
+    play_immediately = 1;
+    t_beat = 1;
 );
 
 // ----------------------------------------------------------------------------
@@ -267,6 +259,7 @@ note_list.length > 0 && ((play_note_trigger && !playing_note)) ? (
         l = 0;
         loop(note_list.length,
             midisend(sample_position, NOTE_ON, note_list[l], 127);
+            play_list.push(note_list[l]);
             l += 1;
         );
     ) : (
@@ -276,13 +269,14 @@ note_list.length > 0 && ((play_note_trigger && !playing_note)) ? (
     play_immediately = 0;
 );
 
-note_list.length > 0 && t_beat >= slider(length_knob.slider_idx) && playing_note ? (
+t_beat >= slider(length_knob.slider_idx) && playing_note ? (
     slider3 == 7 ? (
         l = 0;
-        loop(note_list.length,
-            midisend(sample_position, NOTE_OFF, note_list[l], 127);
+        loop(play_list.length,
+            midisend(sample_position, NOTE_OFF, play_list[l], 127);
             l += 1;
         );
+        play_list.clear();
     ) : (
         midisend(sample_position, NOTE_OFF, current_note, 127);
     );
