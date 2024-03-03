@@ -140,6 +140,37 @@ function test_find_next_by_idx() local(n) (
     __test_find_next_by_idx;
 );
 
+function test_complex() (
+    __test_complex = GOOD;
+
+    __x.complex(1, 0);
+    __test_complex &= __x.creal() == 1;
+    __test_complex &= __x.cim() == 0;
+    __test_complex &= __x.cmod() == 1;
+    __test_complex &= __x.carg() == 0;
+    __x.cpow(2);
+    __test_complex &= cpow__.creal() == 1;
+    __test_complex &= cpow__.cim() == 0;
+
+    __x.complex(1, 1);
+    __test_complex &= __x.creal() == 1;
+    __test_complex &= __x.cim() == 1;
+    __test_complex &= __x.cmod() == sqrt(2);
+    __test_complex &= __x.carg() == $pi / 4;
+    __x.cpow(2);
+    __test_complex &= cpow__.cmod() == 2;
+    __test_complex &= cpow__.carg() == $pi / 2;
+    
+    __x.complex(-1, 0);
+    __test_complex &= __x.cmod() == 1;
+    __test_complex &= __x.carg() == $pi;
+    __x.cpow(3);
+    __test_complex &= cpow__.cmod() == 1;
+    __test_complex &= cpow__.carg() == $pi;
+
+    __test_complex;
+);
+
 function run_tests() (
     __run_tests = GOOD;
     __run_tests &= test_find_next_cyclic();
@@ -147,6 +178,7 @@ function run_tests() (
     __run_tests &= test_root_descend();
     __run_tests &= test_up_down();
     __run_tests &= test_find_next_by_idx();
+    __run_tests &= test_complex();
 
     __TEST_RESULTS__ = __run_tests;
 );

@@ -3,6 +3,8 @@ desc: Defines
 @init
 NOTE_ON  = $x90;
 NOTE_OFF = $x80;
+cmd_mask = $xF0;
+channel_mask = $x0F;
 
 GOOD = 1;
 BAD  = 0;

@@ -148,7 +148,8 @@ function root_descend(cur, prev) local(ret) (
     ) : (
         // we can avoid the copy here
         potential_next_ = this.end() + 1;
-        potential_next_.copy(this + 1, this.length - 1); // 1 means exclude the root
+        potential_next_.copy(this, this.length);
+        potential_next_.remove(potential_next_.min());
         ret = potential_next_.find_next_cyclic(prev, BACKWARD);
         potential_next_.clear();
     );

@@ -25,7 +25,7 @@ function button_create(x, y, w, h, slider_idx) (
 
     this.colors_shapes.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
     this.colors_hover.color_create(LIGHTORANGE.r, LIGHTORANGE.g, LIGHTORANGE.b);
-    this.colors_clicked.color_create(SIGHTORANGE.r, SIGHTORANGE.g, SIGHTORANGE.b);
+    this.colors_clicked.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
     this.font.font_create(1, "Arial", 0.05); // wrapper around gfx_setfont
     this.colors_font.color_create(COFFEE.r, COFFEE.g, COFFEE.b);
 );
@@ -46,19 +46,19 @@ function check_in_rect() (
 function button_draw() local(x, y, w, h, x_, y_, w_, h_) (
     // draw border
     this.font.set_from_font();
-    this.colors_shapes.gfx_colors_from_color();
+    BORANGE.gfx_colors_from_color();
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     w = gfx_w * this.w;
     h = gfx_h * this.h;
     gfx_rect(x, y, w, h);
-    BACKGROUND.gfx_colors_from_color();
+    // BACKGROUND.gfx_colors_from_color();
     delta = 1;
     x_ = x + delta;
     y_ = y + delta;
     w_ = w - 2*delta;
     h_ = h - 2*delta;
-    gfx_rect(x_, y_, w_, h_);
+    // gfx_rect(x_, y_, w_, h_);
 
     this.clicked ? (
         this.colors_clicked.gfx_colors_from_color();
@@ -129,30 +129,98 @@ function button_detect_slider(val) instance(slider_idx) (
 //     draw_arrow(x_, y_, 0, head_size, angle, 0.2);
 // );
 
-function button_draw_up_rect(angle) (
-    x = gfx_w * this.x;
-    y = gfx_h * this.y;
-    w = gfx_w * this.w;
-    h = gfx_h * this.h;
-
-    GORANGE.gfx_colors_from_color();
-    gfx_rect(x + 0.1 * w, y + 0.7 * h, 0.25 * w, 0.2 * h);
-    BORANGE.gfx_colors_from_color();
-    gfx_rect(x + 0.375 * w, y + 0.4 * h, 0.25 * w, 0.2  * h);
-    COFFEE.gfx_colors_from_color();
-    gfx_rect(x + 0.65 * w, y + 0.10  * h, 0.25 * w, 0.2  * h);
+function button_get_shape_color() (
+    this.clicked ? (
+        this.colors_hover.gfx_colors_from_color();
+    ) : (
+        this.colors_shapes.gfx_colors_from_color();
+    );
 );
 
-function button_draw_down_rect(angle) (
+function button_draw_up_rect() (
     x = gfx_w * this.x;
     y = gfx_h * this.y;
     w = gfx_w * this.w;
     h = gfx_h * this.h;
 
-    GORANGE.gfx_colors_from_color();
-    gfx_rect(x + 0.1 * w, y + 0.10 * h, 0.25 * w, 0.2 * h);
-    BORANGE.gfx_colors_from_color();
-    gfx_rect(x + 0.375 * w, y + 0.4 * h, 0.25 * w, 0.2  * h);
-    COFFEE.gfx_colors_from_color();
-    gfx_rect(x + 0.65 * w, y + 0.7  * h, 0.25 * w, 0.2  * h);
+    this.button_get_shape_color();
+    draw_arrow(x + 0.75 * w, y + 0.25 * h, 0, 0.08, 135+180, 0.3);
+);
+
+function button_draw_down_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    this.button_get_shape_color();
+    draw_arrow(x + 0.75 * w, y + 0.75 * h, 0, 0.08, 45, 0.2);
+);
+
+function button_draw_up_down_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    this.button_get_shape_color();
+    draw_arrow(x + 0.45 * w, y + 0.25 * h, 0, 0.06, 315, 0.3);
+    draw_arrow(x + 0.85 * w, y + 0.7 * h, 0, 0.06, 45, 0.15);
+);
+
+function button_draw_down_up_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    this.button_get_shape_color();
+    draw_arrow(x + 0.45 * w, y + 0.7 * h, 0, 0.06, 45, 0.15);
+    draw_arrow(x + 0.85 * w, y + 0.25 * h, 0, 0.06, 315, 0.3);
+);
+
+function button_descend_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    this.button_get_shape_color();
+    draw_arrow(x + 0.75 * w, y + 0.6 * h, 0, 0.08, 30, 0.2);
+    gfx_rect(x + 0.15 * w, y + 0.7 * h, 0.7 * w, 0.05 * h);
+);
+
+function button_random_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    this.button_get_shape_color();
+    text_at(x + w/2, y + h/2, "?");
+);
+
+function button_asplayed_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    this.button_get_shape_color();
+    draw_arrow(x + 0.65 * w, y + 0.5 * h, 0, 0.08, 0, 0.15);
+    r = min(gfx_w * 0.025, gfx_h * 0.025);
+    gfx_circle(x + 0.65 * w, y + 0.5 * h, r, 0, 1);
+    gfx_circle(x + 0.65 * w, y + 0.5 * h, r-1, 0, 1);
+);
+
+function button_chord_rect() (
+    x = gfx_w * this.x;
+    y = gfx_h * this.y;
+    w = gfx_w * this.w;
+    h = gfx_h * this.h;
+
+    this.button_get_shape_color();
+    gfx_rect(x + 0.25 * w, y + (0.7-0.025) * h, 0.5 * w, 0.05 * h);
+    gfx_rect(x + 0.25 * w, y + (0.5-0.025) * h, 0.5 * w, 0.05 * h);
+    gfx_rect(x + 0.25 * w, y + (0.3-0.025) * h, 0.5 * w, 0.05 * h);
 );
