@@ -386,8 +386,14 @@ button_random.button_draw();
 button_asplayed.button_draw();
 button_chord.button_draw();
 
-// button_up.button_draw_up_rect();
-// button_down.button_draw_down_rect();
+button_up.button_draw_up_rect();
+button_down.button_draw_down_rect();
+button_up_down.button_draw_up_down_rect();
+button_down_up.button_draw_down_up_rect();
+button_descend.button_descend_rect();
+button_random.button_random_rect();
+button_asplayed.button_asplayed_rect();
+button_chord.button_chord_rect();
 
 old_slider = slider4;
 button_straight.button_detect_click(0);
